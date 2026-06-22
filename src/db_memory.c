@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <db_errors.h>
@@ -7,8 +8,8 @@ inline int db_alloc(void **mem, size_t mem_size)
     if ((mem != NULL) && (*mem == NULL) && (mem_size > 0)) {
         int err = posix_memalign(mem, 64, mem_size);
 
-        if (err = 0)
-            memset(*mem, 0, mem_size);
+        if (err == 0)
+            explicit_bzero(*mem, mem_size);
 
         return err;
     }
@@ -28,9 +29,10 @@ inline void db_clear_and_free(void **mem, size_t mem_size)
 {
     if ((mem != NULL) && (*mem != NULL)) {
         if (mem_size)
-            memset(*mem, 0, mem_size);
+            explicit_bzero(*mem, mem_size);
 
         free(*mem);
         *mem = NULL;
     }
 }
+

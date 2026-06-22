@@ -5,6 +5,34 @@
 #include <time.h>
 #include <stdbool.h>
 
+// BEGIN SERVICE REQUEST
+
+// Only on edit/update mode. This field will NOT record at database
+typedef enum service_request_flag_e {
+  SERVICE_REQUEST_INIT = 0,
+  SERVICE_REQUEST_NEW,
+  SERVICE_REQUEST_UPDATE,
+  SERVICE_REQUEST_DELETE,
+  SERVICE_REQUEST_NEW_AND_DELETED_BEFORE_SAVE
+} REPAIR_REQUEST_FLAG;
+
+typedef struct service_request_t {
+  uint32_t id;                                     //PK
+  uint32_t repair_request_id;                      // NOT FK for request
+  time_t timestamp;                                // Created service request
+  int32_t quantity;                                // Quantity > 0
+  int64_t unity_price;                             // Unity price (required)
+  char description[128];                           // Description (required)
+} SERVICE_REQUEST;
+
+typedef struct service_request_t {
+  size_t n;                                        // Actual array size
+  size_t array_max_len;                            // Alloc'd array size
+  SERVICE_REQUEST *array;                           // Alloc'd pointer for array. Recyclable. Must be free
+} SERVICE_REQUESTS;
+
+// END SERVICE REQUEST
+
 // BEGIN DEVICE DATA
 #define SET_DEVICE_DATA(x) (int)(1<<x)
 typedef enum solda_electronic_device_data_e {
@@ -35,14 +63,17 @@ typedef enum repair_request_status_e {
 
 // Only on edit/update mode. This field will NOT record at database
 typedef enum repair_request_flag_e {
-  REPAIR_REQUEST_NEW = 0,
+  REPAIR_REQUEST_INIT = 0,
+  REPAIR_REQUEST_NEW,
   REPAIR_REQUEST_UPDATE,
-  REPAIR_REQUEST_DELETE
+  REPAIR_REQUEST_DELETE,
+  REPAIR_REQUEST_NEW_AND_DELETED_BEFORE_SAVE
 } REPAIR_REQUEST_FLAG;
 
-typedef struct solda_repair_requests_t {
+typedef struct repair_request_t {
   uint32_t id;                                    // PK repair request
   uint32_t client_id;                             // FK For client id
+  time_t timestamp;                               // Created request timestamp for Solda client user
   REPAIR_REQUEST_STATUS status;                   // Request status
   bool is_bugdet;                                 // Binary: Bugdet or Work order
   REPAIR_REQUEST_FLAG flag;                       // Only on edit/update mode. This field will NOT record at database
@@ -53,12 +84,13 @@ typedef struct solda_repair_requests_t {
   char observations[196];                         // Obs
   time_t expected_budget_date;                    // Expected bugdget date
   time_t expected_delivery_date;                  // Expected delivery date
-  int64_t total_price;                            // Total price // Fixed point. TODO check validation
+  int64_t labor_bugdet;                           // labor_bugdet // Fixed point. TODO check validation
   time_t delivery_date;                           // Delivery date
   time_t warranty;                                // Total day from delivery date
+  SERVICE_REQUESTS optional_service_requests;     // ARRAY NULLABLE List of service requests
 } REPAIR_REQUEST;
 
-typedef struct repair_request_t {
+typedef struct repair_requests_t {
   size_t n;                                        // Actual array size
   size_t array_max_len;                            // Alloc'd array size
   REPAIR_REQUEST *array;                           // Alloc'd pointer for array. Recyclable. Must be free
@@ -87,8 +119,18 @@ void client_data_free(CLIENT_DATA **);
 // END CLIENT_DATA CONSTRUCTORS AND DESTRUCTORS
 
 // BEGIN CLIENT_DATA MANIPULATION
-int client_data_clear(CLIENT_DATA *);
-int client_add_repair_array(CLIENT_DATA *, REPAIR_REQUEST *, size_t);
+void client_data_clear(CLIENT_DATA *);
+int client_new_repair(size_t *, REPAIR_REQUEST **, CLIENT_DATA *);
 // END CLIENT_DATA MANIPULATION
+
+// BEGIN REPAIR MANIPULATION
+void repair_requests_clear(REPAIR_REQUESTS *);
+
+// END REPAIR MANIPULATION
+
+// BEGIN SERVICE MANIPULATION
+void service_requests_clear(SERVICE_REQUESTS *);
+
+// END SERVICE MANIPULATION
 
 #endif
