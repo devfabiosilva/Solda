@@ -20,6 +20,7 @@ typedef struct service_request_t {
   uint32_t id;                                     //PK
   uint32_t repair_request_id;                      // NOT FK for request
   time_t timestamp;                                // Created service request
+  REPAIR_REQUEST_FLAG flag;                        // Only on edit/update mode. This field will NOT record at database
   int32_t quantity;                                // Quantity > 0
   int64_t unity_price;                             // Unity price (required)
   char description[128];                           // Description (required)
@@ -99,10 +100,11 @@ typedef struct repair_requests_t {
 // END DEVICE DATA
 
 // BEGIN CLIENT USER TABLE
-typedef struct solda_client_data_t {
+typedef struct client_data_t {
   bool touched;                                     // For edit/add/update only flag: true if is used (read to flush in database)
   time_t timestamp;                                 // Created user timestamp for Solda client user
   uint32_t id;                                      // PK (required). TODO check sizeof Postgres INTEGER
+  uint32_t technician_id;                           // FK Technician id
   char cpf[32];                                     // CPF (required) - UNIQUE
   char name[64];                                    // Client name (required)
   char address[128];                                // Client address
@@ -111,21 +113,27 @@ typedef struct solda_client_data_t {
   char phone_number[16];                            // (Required) Phone number;
   REPAIR_REQUESTS repair_requests;                  // NOT NULL repair requests
 } CLIENT_DATA;
+
+typedef struct client_data_list_t {
+  size_t n;                                         // Actual array size
+  size_t array_max_len;                             // Alloc'd array size
+  CLIENT_DATA *array;                               // Alloc'd pointer for array. Recyclable. Must be free
+} CLIENT_DATA_REQUESTS;
+
 // END CLIENT USER TABLE
 
 // BEGIN CLIENT_DATA CONSTRUCTORS AND DESTRUCTORS
-int client_data_init(CLIENT_DATA **);
-void client_data_free(CLIENT_DATA **);
+int client_data_request_init(CLIENT_DATA_REQUESTS **);
+void client_data_request_free(CLIENT_DATA_REQUESTS **);
 // END CLIENT_DATA CONSTRUCTORS AND DESTRUCTORS
 
 // BEGIN CLIENT_DATA MANIPULATION
 void client_data_clear(CLIENT_DATA *);
-int client_new_repair(size_t *, REPAIR_REQUEST **, CLIENT_DATA *);
 // END CLIENT_DATA MANIPULATION
 
 // BEGIN REPAIR MANIPULATION
 void repair_requests_clear(REPAIR_REQUESTS *);
-
+int client_repair_get(size_t *, REPAIR_REQUEST **, CLIENT_DATA *);
 // END REPAIR MANIPULATION
 
 // BEGIN SERVICE MANIPULATION

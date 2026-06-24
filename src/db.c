@@ -77,7 +77,7 @@ int repair_new_service_request(size_t *service_request_index, SERVICE_REQUEST **
                 if (err)
                     return err;
             }
-        } else if (db_alloc((void **)&repair_request ->optional_service_requests.array, MIN_SERVICE_REQUESTS_INITIAL * sizeof(*(&repair_request->optional_service_requests)->array)) == 0) {
+        } else if (db_alloc((void **)&repair_request->optional_service_requests.array, MIN_SERVICE_REQUESTS_INITIAL * sizeof(*(&repair_request->optional_service_requests)->array)) == 0) {
             // Optional. If new at first time, create array element
             repair_request->optional_service_requests.array_max_len = MIN_SERVICE_REQUESTS_INITIAL;
         } else
@@ -95,7 +95,8 @@ int repair_new_service_request(size_t *service_request_index, SERVICE_REQUEST **
 }
 
 // BEGIN CLIENT DATA INITIALIZATION
-int client_data_init(CLIENT_DATA **client_data)
+/*
+static int client_data_init(CLIENT_DATA **client_data)
 {
     if (db_alloc((void **)client_data, sizeof(CLIENT_DATA)) == 0) {
 
@@ -108,17 +109,45 @@ int client_data_init(CLIENT_DATA **client_data)
 
     return DB_UNABLE_TO_ALLOCATE_CLIENT_USER_MEMORY;
 }
-
-void client_data_free(CLIENT_DATA **client_data)
+*/
+int client_data_request_init(CLIENT_DATA_REQUESTS **client_data_request)
 {
-    if ((client_data != NULL) && (*client_data != NULL)) {
+    if (db_alloc((void **)&client_data_request, sizeof(*(*client_data_request))) == 0) {
 
-        repair_requests_free(&(*client_data)->repair_requests);
+        if (db_alloc((void **)&(*client_data_request)->array, MIN_CLIENT_DATA_REQUEST_INITIAL * sizeof(*(*client_data_request)->array)) == 0) {
+            (*client_data_request)->array_max_len = MIN_CLIENT_DATA_REQUEST_INITIAL;
+            return 0;
+        }
 
-        //explicit_bzero((void *)(*client_data), sizeof(CLIENT_DATA));
-        DB_CLEAR_NON_NULL_ELEMENT(*client_data)
-        free((void *)(*client_data));
-        (*client_data) = NULL;
+        db_free(client_data_request);
+
+        return DB_UNABLE_TO_INIT_CLIENT_DATA_REQUEST_REQUEST_ARRAY;
+    }
+
+    return DB_UNABLE_TO_INIT_CLIENT_DATA_REQUEST_REQUEST;
+}
+
+void client_data_request_free(CLIENT_DATA_REQUESTS **client_data_request)
+{
+    if ((client_data_request != NULL) && (*client_data_request != NULL)) {
+        if ((*client_data_request)->array) {
+
+            // For each array, free arrays (if alloc'd)
+            while ((*client_data_request)->n > 1) {
+                CLIENT_DATA *client_data_ptr = &(*client_data_request)->array[--((*client_data_request)->n)];
+                repair_requests_free(client_data_ptr);
+                DB_CLEAR_NON_NULL_ELEMENT(client_data_ptr)
+                free((void *)client_data_ptr);
+            }
+
+            explicit_bzero((void *)(*client_data_request)->array, (*client_data_request)->array_max_len * sizeof(*((*client_data_request)->array)));
+            free((void *)(*client_data_request)->array);
+            //(*client_data_request)->array = NULL;
+        }
+
+        explicit_bzero((void *)(*client_data_request), sizeof(*(*client_data_request)));
+        free((void *)(*client_data_request));
+        (*client_data_request) = NULL;
     }
 }
 
@@ -145,41 +174,10 @@ _Static_assert(sizeof(CLIENT_DATA) == sizeof(*client_data), "Error test");
 }
 // END CLEAR ALL EDIT/ADD/DELETE records (NOT STORED IN DATABASE)
 
+// BEGIN NEW REPAIR BEFORE SAVE
 // REPAIR_REQUEST **request and *request ARE NOT NULL
 GROW_ARRAY_FUNC(repair_request, REPAIR_REQUESTS)
-/*static int repair_request_grow(REPAIR_REQUESTS **requests, size_t plus_n)
-{
-    if (plus_n > 0) {
-        plus_n += (*requests)->array_max_len;
-
-        DB_ALIGN_VEC_LENGTH(plus_n, MIN_REPAIR_REQUEST_INITIAL)
-
-        if (MAX_REPAIR_REQUESTS_LIMIT >= plus_n) {
-            REPAIR_REQUEST *new = NULL, *current;
-
-            if (db_alloc((void **)&new, plus_n * sizeof(REPAIR_REQUEST)))
-                return DB_UNABLE_TO_GROW_AND_MOVE_REPAIR_REQUESTS;
-
-            current = (*requests)->array;
-
-            memcpy((void *)new, (void *)current, (*requests)->n * sizeof(*new));
-
-            db_clear_and_free((void **)&current, (*requests)->array_max_len * sizeof(*current));
-
-            (*requests)->array = new;
-            (*requests)->array_max_len = plus_n;
-
-            new = NULL;
-
-            return 0;
-        }
-    }
-
-    return DB_UNABLE_TO_GROW_REPAIR_REQUESTS;
-}*/
-
-// BEGIN NEW REPAIR BEFORE SAVE
-int client_new_repair(size_t *repair_request_index, REPAIR_REQUEST **request_out, CLIENT_DATA *client_data)
+int client_repair_get(size_t *index, REPAIR_REQUEST **request_out, CLIENT_DATA *client_data)
 {
     *request_out = NULL;
     if (client_data != NULL) {
@@ -190,8 +188,8 @@ int client_new_repair(size_t *repair_request_index, REPAIR_REQUEST **request_out
                 return err;
         }
 
-        if (repair_request_index)
-            *repair_request_index = client_data->repair_requests.n;
+        if (index)
+            *index = client_data->repair_requests.n;
 
         *request_out = &(client_data->repair_requests.array[client_data->repair_requests.n++]);
 
@@ -201,3 +199,7 @@ int client_new_repair(size_t *repair_request_index, REPAIR_REQUEST **request_out
     return DB_UNABLE_TO_ADD_REPAIR_REQUEST;
 }
 // END NEW REPAIR BEFORE SAVE
+
+// BEGIN CLIENT MANIPULATION
+// Technician
+// END CLIENT MANIPULATION
