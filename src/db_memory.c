@@ -10,6 +10,8 @@ inline int db_alloc(void **mem, size_t mem_size)
 
         if (err == 0)
             explicit_bzero(*mem, mem_size);
+        else
+            *mem = NULL;
 
         return err;
     }

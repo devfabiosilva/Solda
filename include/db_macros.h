@@ -45,12 +45,11 @@ static int func_name##_grow(type **requests, size_t plus_n) \
 \
             memcpy((void *)new, (void *)current, (*requests)->n * sizeof(*new)); \
 \
-            db_clear_and_free((void **)&current, (*requests)->array_max_len * sizeof(*current)); \
+            explicit_bzero((void *)current, (*requests)->array_max_len * sizeof(*current)); \
+            free((void *)current); \
 \
             (*requests)->array = new; \
             (*requests)->array_max_len = plus_n; \
-\
-            new = NULL; \
 \
             return 0; \
         } \
