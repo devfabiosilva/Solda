@@ -8,7 +8,7 @@
 #define LONG_DESCRIPTION_SZ 500   // observations, related defects
 #define SERIAL_NUMBER_SZ    100   // IMEI, serial
 #define PHONE_SZ            20    // phone
-#define CPF_SZ              20    // fixed — "000.000.000-00 or more"
+#define CPF_SZ              20    // fixed — "000.000.000-00" + 6 bytes for update system
 
 // UTF-8 byte size (worst case)
 //Email specs: RFC 5321

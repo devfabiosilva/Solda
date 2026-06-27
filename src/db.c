@@ -85,7 +85,7 @@ static void repair_requests_free(REPAIR_REQUESTS *repair_requests)
         repair_requests->array = NULL;
     }
 }
-
+/*
 GROW_ARRAY_FUNC(service_request, SERVICE_REQUESTS)
 int repair_new_service_request(size_t *service_request_index, SERVICE_REQUEST **service_request_out, REPAIR_REQUEST *repair_request)
 {
@@ -113,7 +113,7 @@ int repair_new_service_request(size_t *service_request_index, SERVICE_REQUEST **
 
     return DB_UNABLE_TO_ADD_SERVICE_REQUEST;
 }
-
+*/
 // BEGIN CLIENT DATA INITIALIZATION
 
 static int client_data_requests_init(CLIENT_DATA_REQUESTS *client_data_request)
@@ -168,27 +168,32 @@ _Static_assert(sizeof(CLIENT_DATA) == sizeof(*client_data), "Error test");
 // BEGIN NEW REPAIR BEFORE SAVE
 // REPAIR_REQUEST **request and *request ARE NOT NULL
 GROW_ARRAY_FUNC(repair_request, REPAIR_REQUESTS)
-int client_aquire_repair(size_t *index, REPAIR_REQUEST **request_out, CLIENT_DATA *client_data)
+ACQUIRE_FUNC(client_acquire_repair, repair_request, CLIENT_DATA, REPAIR_REQUEST, repair_requests)
+/*
+int client_acquire_repair(size_t *index, REPAIR_REQUEST **out, CLIENT_DATA *in)
 {
-    *request_out = NULL;
-    if (client_data != NULL) {
+    *out = NULL;
+    if (in != NULL) {
 
-        if (client_data->repair_requests.n >= client_data->repair_requests.array_max_len) {
-            int err = repair_request_grow(&client_data->repair_requests, 1);
+        if (in->repair_requests.n >= in->repair_requests.array_max_len) {
+            int err = repair_request_grow(&in->repair_requests, 1);
             if (err)
                 return err;
         }
 
         if (index)
-            *index = client_data->repair_requests.n;
+            *index = in->repair_requests.n;
 
-        *request_out = &(client_data->repair_requests.array[client_data->repair_requests.n++]);
+        *out = &(in->repair_requests.array[in->repair_requests.n++]);
 
         return 0;
     }
 
     return DB_UNABLE_TO_ADD_REPAIR_REQUEST;
 }
+*/
+GROW_ARRAY_FUNC(service_request, SERVICE_REQUESTS)
+ACQUIRE_FUNC(client_acquire_repair, service_request, REPAIR_REQUEST, SERVICE_REQUEST, optional_service_requests)
 // END NEW REPAIR BEFORE SAVE
 
 // BEGIN CLIENT MANIPULATION
@@ -288,7 +293,7 @@ GROW_ARRAY_FUNC(technician_data_requests, TECHNICIAN_DATA_REQUESTS)
 int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA **out, TECHNICIAN_DATA_REQUESTS *in)
 {
     int err = 0;
-    if ((index != NULL) && (out != NULL) && (in != NULL)) {
+    if ((index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL)) {
         *out = NULL;
         *index = 0;
 
@@ -314,5 +319,25 @@ int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA
         err = DB_UNABLE_TO_ACQUIRE_TECHNICIAN_DATA_FROM_ARRAY;
 
     return err;
+}
+
+int technician_acquire_client_data_requests(CLIENT_DATA_REQUESTS **out, TECHNICIAN_DATA *in)
+{
+  int err = 0;
+  if ((out != NULL) && (*out == NULL) && (in != NULL)) {
+    *out = &in->client_requests;
+    if (in->client_requests.array == NULL) {
+        if (db_alloc((void **)&(in->client_requests.array), MIN_CLIENT_DATA_REQUESTS_INITIAL * sizeof(*(in->client_requests.array))) == 0) {
+            in->client_requests.array_max_len = MIN_CLIENT_DATA_REQUESTS_INITIAL; 
+            in->client_requests.n = 0;
+        } else {
+            *out = NULL;
+            err = DB_UNABLE_TO_ACQUIRE_AND_ALLOC_CLIENT_DATA_REQUESTS_FROM_TECHNICIAN_DATA;
+        }
+    }
+  } else
+    err = DB_UNABLE_TO_ACQUIRE_CLIENT_DATA_REQUESTS_FROM_TECHNICIAN_DATA;
+
+  return err;
 }
 // END CLIENT MANIPULATION

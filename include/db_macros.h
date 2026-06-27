@@ -58,35 +58,27 @@ static int func_name##_grow(type **requests, size_t plus_n) \
     return DB_UNABLE_TO_GROW_##type; \
 }
 
-/*static int repair_request_grow(REPAIR_REQUESTS **requests, size_t plus_n)
-{
-    if (plus_n > 0) {
-        plus_n += (*requests)->array_max_len;
-
-        DB_ALIGN_VEC_LENGTH(plus_n, MIN_REPAIR_REQUEST_INITIAL)
-
-        if (MAX_REPAIR_REQUESTS_LIMIT >= plus_n) {
-            REPAIR_REQUEST *new = NULL, *current;
-
-            if (db_alloc((void **)&new, plus_n * sizeof(REPAIR_REQUEST)))
-                return DB_UNABLE_TO_GROW_AND_MOVE_REPAIR_REQUESTS;
-
-            current = (*requests)->array;
-
-            memcpy((void *)new, (void *)current, (*requests)->n * sizeof(*new));
-
-            db_clear_and_free((void **)&current, (*requests)->array_max_len * sizeof(*current));
-
-            (*requests)->array = new;
-            (*requests)->array_max_len = plus_n;
-
-            new = NULL;
-
-            return 0;
-        }
-    }
-
-    return DB_UNABLE_TO_GROW_REPAIR_REQUESTS;
-}*/
+#define ACQUIRE_FUNC(func, arra_grow_func, parent_type, child_type, field) \
+int func(size_t *index, child_type **out, parent_type *in) \
+{ \
+    *out = NULL; \
+    if (in != NULL) { \
+\
+        if (in->field.n >= in->field.array_max_len) { \
+            int err = arra_grow_func##_grow(&in->field, 1); \
+            if (err) \
+                return err; \
+        } \
+\
+        if (index) \
+            *index = in->field.n; \
+\
+        *out = &(in->field.array[in->field.n++]); \
+\
+        return 0; \
+    } \
+\
+    return DB_UNABLE_TO_ADD_##child_type; \
+}
 
 #endif

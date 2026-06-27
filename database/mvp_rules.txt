@@ -1,3 +1,19 @@
+-- dump
+pg_dump -U fabio -d solda_mvp -t repair_request -f backup_repair.sql
+
+-- dump (data only)
+pg_dump -U fabio -d solda_mvp -t repair_request --data-only --inserts -f somente_dados_mock.sql
+
+-- restore
+psql -U fabio -d solda_mvp -f somente_dados_mock.sql
+
+-- dump a specific table
+pg_dump -U seu_usuario -d solda_mvp -F c -t repair_request -f apenas_tabela_repair.dump
+
+-- dump a database complete
+pg_dump -U fabio -d solda_mvp -F c -f banco_completo_olda.dump -h localhost
+
+
 -- create database
 create database solda_mvp;
 
@@ -16,7 +32,7 @@ create table technician_data (
     rules                  INT DEFAULT 0
 );
 
--- mock parent technician_data
+-- mock parent technician_data from Gemini
 INSERT INTO technician_data (name, email, rules)
 SELECT 
     'Technician MOCK ' || s.id,
@@ -24,15 +40,267 @@ SELECT
     (random() * 255)::int -- Generates 0 e 255
 FROM generate_series(1, 100) AS s(id);
 
+-- create table based on struct client_data_t
+create table client_data (
+    id              SERIAL PRIMARY KEY,
+    technician_id   INTEGER REFERENCES NOT NULL technician_data(id), -- not null
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    cpf             VARCHAR(20) NOT NULL UNIQUE CONSTRAINT chk_client_cpf CHECK (char_length(cpf) = 14), -- length = 20 (6 more bytes for RF updates)
+    name            VARCHAR(100) NOT NULL CONSTRAINT chk_client_name  CHECK (char_length(name) > 2),
+    address         VARCHAR(200),
+    district_city   VARCHAR(200),
+    email           VARCHAR(255) NOT NULL UNIQUE CONSTRAINT chk_client_email CHECK (char_length(email) > 2),
+    phone_number    VARCHAR(20) NOT NULL CONSTRAINT chk_client_phone CHECK (char_length(phone_number) > 2)
+);
+
+-- mock client data from Claude
+INSERT INTO client_data (technician_id, cpf, name, address, district_city, email, phone_number)
+SELECT
+    (random() * 99 + 1)::int,                          -- technician_id between 1 e 100
+    to_char(s.id, 'FM000') || '.' ||
+    to_char(s.id, 'FM000') || '.' ||
+    to_char(s.id, 'FM000') || '-' ||
+    to_char(s.id % 100, 'FM00'),                        -- CPF formatted: 001.001.001-01
+    'Client MOCK ' || s.id,                             -- name
+    'Rua Mock ' || s.id || ', Nr ' || s.id,             -- address
+    'Bairro Mock ' || s.id || ', Rio de Janeiro',       -- district/city
+    'client' || s.id || '@email.com.br',                -- email unique
+    '(21) 9' || to_char(s.id % 10000, 'FM0000') ||
+    '-' || to_char(s.id % 10000, 'FM0000')              -- phone: (21) 90001-0001
+FROM generate_series(1, 100) AS s(id);
+
+-- first join test:
+SELECT 
+    c.id,
+    c.name AS client,
+    c.cpf,
+    t.name AS technician
+FROM client_data c
+JOIN technician_data t ON c.technician_id = t.id
+LIMIT 10;
+
+-- How many technicians has more clients?
+SELECT 
+    t.name AS technician,
+    COUNT(c.id) AS total_clients
+FROM technician_data t
+LEFT JOIN client_data c ON c.technician_id = t.id
+GROUP BY t.id, t.name
+ORDER BY total_clients DESC
+LIMIT 10;
+
+SELECT t.name, c.name
+FROM technician_data t
+LEFT JOIN client_data c ON c.technician_id = t.id
+
+technician_data          client_data
+───────────────          ───────────
+Technician 1    ←───→   Client 1, Client 2
+Technician 2    ←───→   Client 3
+Technician 3    ←───→   NULL ← aparece com NULL no lado direito!
+Technician 4    ←───→   Client 4
+
+-- todos os clientes, mesmo sem técnico
+SELECT t.name, c.name
+FROM technician_data t
+RIGHT JOIN client_data c ON c.technician_id = t.id
+
+--Right Join is used to check inconsistences
+-- RIGHT JOIN — todos os clientes, mesmo sem técnico
+SELECT t.name AS technician, c.name AS client
+FROM technician_data t
+RIGHT JOIN client_data c ON c.technician_id = t.id
+WHERE t.id IS NULL;  -- no technician (inconsistences)
+
+ALTER TABLE repair_request 
+ALTER COLUMN client_data_id SET NOT NULL;
+
+-- create table based on struct repair_request_t
+create table repair_request (
+    id                     SERIAL PRIMARY KEY,
+    client_data_id         INTEGER REFERENCES NOT NULL client_data(id),
+    created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status                 SMALLINT NOT NULL DEFAULT 0,
+    is_budget              BOOLEAN NOT NULL DEFAULT FALSE,
+    device_problem         SMALLINT NOT NULL DEFAULT 0,
+    brand_model            VARCHAR(64),
+    serial_number          VARCHAR(64),
+    claimed_defect         VARCHAR(500),
+    observations           VARCHAR(500),
+    monetary_type          SMALLINT NOT NULL DEFAULT 0,
+    expected_budget_date   TIMESTAMPTZ,
+    expected_delivery_date TIMESTAMPTZ,
+    labor_bugdet           BIGINT CONSTRAINT chk_labor_price CHECK (labor_bugdet > 0),
+    delivery_date          TIMESTAMPTZ,
+    warranty               TIMESTAMPTZ
+);
+
+-- mock data
+INSERT INTO repair_request (
+    client_data_id,
+    created_at,
+    status,
+    is_budget,
+    device_problem,
+    brand_model,
+    serial_number,
+    claimed_defect,
+    observations,
+    monetary_type,
+    expected_budget_date,
+    expected_delivery_date,
+    labor_bugdet,
+    delivery_date,
+    warranty
+)
+SELECT
+    -- client_data_id
+    (random() * 99 + 1)::int AS client_data_id,
+    
+    -- Creating a random days
+    NOW() - (random() * INTERVAL '30 days') AS created_at,
+    
+    -- random Status 0, 1, 2, 3, 4, 5
+    (random() * 5)::int AS status,
+    
+    -- 50% true | false
+    (random() > 0.5) AS is_budget,
+    
+    -- Problem code 1 e 5
+    (random() * 14)::int AS device_problem,
+    
+    -- Dynamically serial ID
+    CASE (s.id % 4)
+        WHEN 0 THEN 'Apple iPhone 14'
+        WHEN 1 THEN 'Samsung Galaxy S24'
+        WHEN 2 THEN 'Dell Inspiron 15'
+        ELSE 'Sony PlayStation 5'
+    END AS brand_model,
+    
+    -- Brand model ID
+    'SN-' || to_char(s.id * 123, 'FM00000000') AS serial_number,
+    
+    -- Model claimed defect
+    CASE (s.id % 4)
+        WHEN 0 THEN 'Tela trincada e touch não responde'
+        WHEN 1 THEN 'Bateria descarregando muito rápido'
+        WHEN 2 THEN 'Não liga, apresenta 3 bipes ao conectar na tomada'
+        ELSE 'Superaquecendo e desligando após 10 minutos de jogo'
+    END AS claimed_defect,
+    
+    -- Fake observations
+    'Aparelho com marcas de uso normais. ID do mock: ' || s.id AS observations,
+    
+    -- Monetary types (0 - Dolar 1- Real 2- Bitcoin)
+    (random() * 2)::int AS monetary_type,
+    
+    -- Budget date: 2 days after registering
+    NOW() + INTERVAL '2 days' AS expected_budget_date,
+    
+    -- Deliver date: 5 days after created
+    NOW() + INTERVAL '5 days' AS expected_delivery_date,
+    
+    -- Budget 15000 (R$150) e 85000 (R$850) -> Respects a CONSTRAINT > 0
+    (random() * 70000 + 15000)::bigint AS labor_bugdet,
+    
+    -- Deiliver date (null for opening order)
+    CASE WHEN random() > 0.5 THEN NOW() + (random() * INTERVAL '5 days') ELSE NULL END AS delivery_date,
+    
+    -- Warranty (3 months after delivering)
+    CASE WHEN random() > 0.5 THEN NOW() + INTERVAL '90 days' ELSE NULL END AS warranty
+
+FROM generate_series(1, 100) AS s(id);
+
+SELECT c.id, c.name, c.cpf, c.address, c.email, r.device_problem, r.brand_model, r.serial_number
+FROM client_data c
+LEFT JOIN repair_request r ON r.client_data_id = c.id
+GROUP BY c.id, r.device_problem, r.brand_model, r.serial_number
+ORDER BY c.name ASC
+LIMIT 10;
+
+ALTER TABLE service_request 
+ADD COLUMN monetary_type SMALLINT NOT NULL DEFAULT 0;
+
+ALTER TABLE app_config ADD CONSTRAINT single_row CHECK (id = 1);
+
+ALTER TABLE service_request 
+ALTER COLUMN repair_request_id SET NOT NULL;
 
 -- create table based on typedef struct service_request_t
 create table service_request (
     id                     SERIAL PRIMARY KEY,
-    repair_request_id      INTEGER REFERENCES repair_request(id),
+    repair_request_id      INTEGER REFERENCES NOT NULL repair_request(id),
     created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     quantity               INT CONSTRAINT chk_positive_quantity_in_service CHECK (quantity > 0),
+    monetary_type          SMALLINT NOT NULL DEFAULT 0,
     unity_price            BIGINT CONSTRAINT chk_unity_price_service CHECK (unity_price > 0),
     description            VARCHAR(500)
 );
 
+-- mock by Gemini
+INSERT INTO service_request (
+    repair_request_id,
+    created_at,
+    quantity,
+    monetary_type,
+    unity_price,
+    description
+)
+SELECT
+    -- valid id 1 e 100 (IDs que geramos antes)
+    (random() * 99 + 1)::int AS repair_request_id,
+    
+    -- created in random 15 days
+    NOW() - (random() * INTERVAL '15 days') AS created_at,
+    
+    -- quantity 1 e 3 (value > 0)
+    (random() * 2 + 1)::int AS quantity,
+    
+    -- Tipo monetário (0 - dolar 1- real 2- bitcoin)
+    (random() * 2)::int AS monetary_type,
+    
+    -- price per unity 3000 (R$30) e 45000 (R$450) in cents (value > 0)
+    (random() * 42000 + 3000)::bigint AS unity_price,
+    
+    -- Description
+    CASE (s.id % 5)
+        WHEN 0 THEN 'Substituição de conector de carga Tipo-C'
+        WHEN 1 THEN 'Limpeza química interna e desoxidação de placa'
+        WHEN 2 THEN 'Troca de módulo display frontal compatível'
+        WHEN 3 THEN 'Aplicação de pasta térmica de alta performance'
+        ELSE 'Mão de obra interna - Reparo de circuito de alimentação'
+    END AS description
 
+FROM generate_series(1, 200) AS s(id);
+
+SELECT 
+    c.name AS cliente, 
+    r.brand_model AS aparelho, 
+    s.description AS servico, 
+    s.quantity AS qtd, 
+    s.unity_price AS preco_unit
+FROM client_data c
+JOIN repair_request r ON r.client_data_id = c.id
+JOIN service_request s ON s.repair_request_id = r.id
+ORDER BY c.name ASC
+LIMIT 15;
+
+CREATE TABLE app_config (
+    id              INTEGER PRIMARY KEY DEFAULT 1 CONSTRAINT single_row CHECK (id = 1),  -- default 1 line
+    schema_version  INTEGER NOT NULL DEFAULT 1,
+    currency        SMALLINT NOT NULL DEFAULT 1 CONSTRAINT invalid_currency_type CHECK (currency < 3), -- enumerator: 0=BRL, 1=USD, 2=BTC
+    last_access     TIMESTAMPTZ,
+    app_name        VARCHAR(32) NOT NULL DEFAULT 'Solda MVP',
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- only one table
+ALTER TABLE app_config ADD CONSTRAINT single_row CHECK (id = 1);
+
+-- comment
+INSERT INTO app_config (id) VALUES (1);
+
+
+-- Busca qualquer cliente que tenha "mock 1" no nome, ignorando maiúsculas/minúsculas
+WHERE c.name ILIKE '%mock 1%'
