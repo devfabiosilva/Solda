@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <stdbool.h>
+#include <db_config.h>
 
 // BEGIN SERVICE REQUEST
 
@@ -19,11 +20,11 @@ typedef enum service_request_flag_e {
 typedef struct service_request_t {
   uint32_t id;                                     // PK
   uint32_t repair_request_id;                      // FK for request
-  time_t timestamp;                                // Created service request
+  time_t created_at;                               // Created service request
   REPAIR_REQUEST_FLAG flag;                        // Only on edit/update mode. This field will NOT record at database
   int32_t quantity;                                // Quantity > 0
   int64_t unity_price;                             // Unity price (required)
-  char description[128];                           // Description (required)
+  char description[LONG_DESCRIPTION_BUF];          // Description (required)
 } SERVICE_REQUEST;
 
 typedef struct service_requests_t {
@@ -73,17 +74,17 @@ typedef enum repair_request_flag_e {
 } REPAIR_REQUEST_FLAG;
 
 typedef struct repair_request_t {
-  uint32_t id;                                    // PK repair request
-  uint32_t client_id;                             // FK For client id
-  time_t timestamp;                               // Created request timestamp for Solda client user
+  int32_t id;                                     // PK repair request
+  int32_t client_id;                              // FK For client id
+  time_t created_at;                              // Created request timestamp for Solda client user
   REPAIR_REQUEST_STATUS status;                   // Request status
   bool is_bugdet;                                 // Binary: Bugdet or Work order
   REPAIR_REQUEST_FLAG flag;                       // Only on edit/update mode. This field will NOT record at database
   ELECTRONIC_DEVICE_DATA_ENUMERATOR device_data;  // Problem data
-  char brand_model[64];                           // Brand or model
-  char serial_number[64];                         // IMEI, serial number ...
-  char claimed_defect[196];                       // Defect according to client user
-  char observations[196];                         // Obs
+  char brand_model[SHORT_NAME_BUF];               // Brand or model
+  char serial_number[SHORT_NAME_BUF];             // IMEI, serial number ...
+  char claimed_defect[LONG_DESCRIPTION_BUF];      // Defect according to client user
+  char observations[LONG_DESCRIPTION_BUF];        // Obs
   time_t expected_budget_date;                    // Expected bugdget date
   time_t expected_delivery_date;                  // Expected delivery date
   int64_t labor_bugdet;                           // labor_bugdet // Fixed point. TODO check validation
@@ -104,14 +105,14 @@ typedef struct repair_requests_t {
 typedef struct client_data_t {
   bool touched;                                     // For edit/add/update only flag: true if is used (read to flush in database)
   time_t timestamp;                                 // Created user timestamp for Solda client user
-  uint32_t id;                                      // PK (required). TODO check sizeof Postgres INTEGER
-  uint32_t technician_id;                           // FK Technician id
-  char cpf[32];                                     // CPF (required) - UNIQUE
-  char name[64];                                    // Client name (required)
-  char address[128];                                // Client address
-  char district_city[64];                           // District and city
-  char email_address[64];                           // (Required) email address;
-  char phone_number[16];                            // (Required) Phone number;
+  int32_t id;                                       // PK (required). TODO check sizeof Postgres INTEGER
+  int32_t technician_id;                            // FK Technician id
+  char cpf[CPF_BUF];                                // CPF (required) - UNIQUE
+  char name[NAME_SZ];                               // Client name (required)
+  char address[ADDRESS_BUF];                        // Client address
+  char district_city[ADDRESS_BUF];                  // District and city
+  char email_address[EMAIL_ADDRESS_SZ];             // (Required) email address;
+  char phone_number[PHONE_BUF];                     // (Required) Phone number;
   REPAIR_REQUESTS repair_requests;                  // NOT NULL repair requests
 } CLIENT_DATA;
 
@@ -136,16 +137,17 @@ typedef enum technician_rules_e {
 } TECHNICIAN_RULES;
 #undef SET_TECHNICIAN_RULES
 
-typedef struct {
+typedef struct technician_data_t{
   bool touched;
-  time_t timestamp;
-  uint32_t id;
-  char name[64];
+  int32_t id;
   TECHNICIAN_RULES rules;
+  time_t created_at;
+  char name[SHORT_NAME_SZ];
+  char email[EMAIL_ADDRESS_SZ];
   CLIENT_DATA_REQUESTS client_requests;
 } TECHNICIAN_DATA;
 
-typedef struct technician_data_list_t {
+typedef struct technician_data_requests_t {
   size_t n;                                         // Actual array size
   size_t array_max_len;                             // Alloc'd array size
   TECHNICIAN_DATA *array;                           // Alloc'd pointer for array. Recyclable. Must be free

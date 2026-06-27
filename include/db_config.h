@@ -1,6 +1,27 @@
 #ifndef DB_CONFIG_H
  #define DB_CONFIG_H
 
+#define SHORT_NAME_SZ       64    // short names
+#define NAME_SZ             100   // name, email
+#define ADDRESS_SZ          200   // full address
+#define DESCRIPTION_SZ      150   // service, parts description 
+#define LONG_DESCRIPTION_SZ 500   // observations, related defects
+#define SERIAL_NUMBER_SZ    100   // IMEI, serial
+#define PHONE_SZ            20    // phone
+#define CPF_SZ              20    // fixed — "000.000.000-00 or more"
+
+// UTF-8 byte size (worst case)
+//Email specs: RFC 5321
+#define EMAIL_ADDRESS_SZ        (255 + 1)
+#define SHORT_NAME_BUF          (SHORT_NAME_SZ       * 4 + 1)
+#define NAME_BUF                (NAME_SZ             * 4 + 1)
+#define ADDRESS_BUF             (ADDRESS_SZ          * 4 + 1)
+#define DESCRIPTION_BUF         (DESCRIPTION_SZ      * 4 + 1)
+#define LONG_DESCRIPTION_BUF    (LONG_DESCRIPTION_SZ * 4 + 1)
+#define SERIAL_NUMBER_BUF       (SERIAL_NUMBER_SZ    * 4 + 1)
+#define PHONE_BUF               (PHONE_SZ            * 4 + 1)
+#define CPF_BUF                 (CPF_SZ              * 4 + 1)
+
 #define MIN_REPAIR_REQUESTS_INITIAL 16 // MIN request list element per client at init
 #define MAX_REPAIR_REQUESTS_LIMIT 1024 // MAX request list element per client
 

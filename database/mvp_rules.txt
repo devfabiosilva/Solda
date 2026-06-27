@@ -1,0 +1,38 @@
+-- create database
+create database solda_mvp;
+
+-- grant all privileges to user (i.e fabio)
+grant all privileges on database solda_mvp to fabio;
+
+-- access user (i.e fabio) with pass
+psql -U fabio -d solda_mvp -h localhost
+
+-- create parent technician_data
+create table technician_data (
+    id                     SERIAL PRIMARY KEY,
+    created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    name                   VARCHAR(100) NOT NULL CONSTRAINT chk_name_in_technician CHECK (char_length(name) > 2),
+    email                  VARCHAR(255) NOT NULL CONSTRAINT technicial_email UNIQUE,
+    rules                  INT DEFAULT 0
+);
+
+-- mock parent technician_data
+INSERT INTO technician_data (name, email, rules)
+SELECT 
+    'Technician MOCK ' || s.id,
+    'technician' || s.id || '@empresa.com.br',
+    (random() * 255)::int -- Generates 0 e 255
+FROM generate_series(1, 100) AS s(id);
+
+
+-- create table based on typedef struct service_request_t
+create table service_request (
+    id                     SERIAL PRIMARY KEY,
+    repair_request_id      INTEGER REFERENCES repair_request(id),
+    created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    quantity               INT CONSTRAINT chk_positive_quantity_in_service CHECK (quantity > 0),
+    unity_price            BIGINT CONSTRAINT chk_unity_price_service CHECK (unity_price > 0),
+    description            VARCHAR(500)
+);
+
+

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <db.h>
 #include <db_memory.h>
-#include <db_config.h>
 #include <db_errors.h>
 #include <db_macros.h>
 
@@ -34,7 +33,7 @@ void _repair_request_clear(REPAIR_REQUEST *request)
     size_t array_max_len = request->optional_service_requests.array_max_len;
     SERVICE_REQUEST *service_request_array = request->optional_service_requests.array;
     if (service_request_array)
-        while (request->optional_service_requests.n > 1) {
+        while (request->optional_service_requests.n > 0) {
             SERVICE_REQUEST *service_request_ptr = &request->optional_service_requests.array[--(request->optional_service_requests.n)];
             _service_requests_clear(service_request_ptr);
         }
@@ -53,7 +52,7 @@ void repair_request_clear(REPAIR_REQUEST *request)
 static void _repair_requests_clear(REPAIR_REQUESTS *requests)
 {
     if (requests->array)
-        while (requests->n > 1) {
+        while (requests->n > 0) {
             REPAIR_REQUEST *repair_request_ptr = &requests->array[--(requests->n)];
 
             _repair_request_clear(repair_request_ptr);
@@ -74,7 +73,7 @@ static void repair_requests_free(REPAIR_REQUESTS *repair_requests)
     if (repair_requests->array) {
 
         // For each array, free optional_service_requests arrays (if alloc'd)
-        while (repair_requests->n > 1) {
+        while (repair_requests->n > 0) {
             REPAIR_REQUEST *repair_request_ptr = &repair_requests->array[--(repair_requests->n)];
             SERVICE_REQUESTS *optional_service_requests = &repair_request_ptr->optional_service_requests;
             // Last child array: service request
@@ -132,7 +131,7 @@ static void client_data_requests_free(CLIENT_DATA_REQUESTS *client_data_request)
     if ((client_data_request)->array) {
 
         // For each array, free arrays (if alloc'd)
-        while (client_data_request->n > 1) {
+        while (client_data_request->n > 0) {
             CLIENT_DATA *client_data_ptr = &client_data_request->array[--(client_data_request)->n];
             repair_requests_free(&client_data_ptr->repair_requests);
         }
@@ -237,7 +236,7 @@ void technician_data_requests_free(TECHNICIAN_DATA_REQUESTS **requests)
     if ((requests != NULL) && (*requests != NULL)) {
 
         if ((*requests)->array)
-            while ((*requests)->n > 1) {
+            while ((*requests)->n > 0) {
                 TECHNICIAN_DATA *technician_data_ptr = &(*requests)->array[--(*requests)->n];
                 client_data_requests_free(&technician_data_ptr->client_requests);
             }
@@ -256,7 +255,7 @@ static void _technician_data_clear(TECHNICIAN_DATA *request)
     CLIENT_DATA *client_data_array = request->client_requests.array;
 
     if (client_data_array)
-        while (request->client_requests.n > 1) {
+        while (request->client_requests.n > 0) {
             CLIENT_DATA *client_data_ptr = &request->client_requests.array[--(request->client_requests.n)];
             _client_data_clear(client_data_ptr);
         }
@@ -276,7 +275,7 @@ void technician_data_requests_clear(TECHNICIAN_DATA_REQUESTS *requests)
 {
     if (requests) {
         if (requests->array)
-            while (requests->n > 1) {
+            while (requests->n > 0) {
                 TECHNICIAN_DATA *technician_data_ptr = &requests->array[--(requests->n)];
                 _technician_data_clear(technician_data_ptr);
             }
@@ -288,14 +287,14 @@ void technician_data_requests_clear(TECHNICIAN_DATA_REQUESTS *requests)
 GROW_ARRAY_FUNC(technician_data_requests, TECHNICIAN_DATA_REQUESTS)
 int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA **out, TECHNICIAN_DATA_REQUESTS *in)
 {
+    int err = 0;
     if ((index != NULL) && (out != NULL) && (in != NULL)) {
         *out = NULL;
         *index = 0;
 
-        int err = 0;
         if (in->array) {
             if (in->n >= in->array_max_len) {
-                err = technician_data_requests(&in, 1);
+                err = technician_data_requests_grow(&in, 1);
                 if (err)
                     return err;
             }
@@ -311,9 +310,9 @@ int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA
         } else
             err = DB_UNABLE_TO_ACQUIRE_AND_ALLOC_TECHNICIAN_DATA_FROM_ARRAY;
 
-        return err;
-    }
+    } else
+        err = DB_UNABLE_TO_ACQUIRE_TECHNICIAN_DATA_FROM_ARRAY;
 
-    return DB_UNABLE_TO_ACQUIRE_TECHNICIAN_DATA_FROM_ARRAY;
+    return err;
 }
 // END CLIENT MANIPULATION
