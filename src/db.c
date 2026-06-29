@@ -1,13 +1,14 @@
+#include <string.h>
 #include <stdlib.h>
 #include <db.h>
 #include <db_memory.h>
 #include <db_errors.h>
 #include <db_macros.h>
 
-inline void service_request_clear(SERVICE_REQUEST *service_request)
+inline void service_request_clear(SERVICE *service_request)
 {
     if (service_request)
-        explicit_bzero(service_request, sizeof(*explicit_bzero));
+        explicit_bzero(service_request, sizeof(*service_request));
 }
 
 static void _service_requests_clear(SERVICE_REQUESTS *service_requests)
@@ -21,27 +22,15 @@ void service_requests_clear(SERVICE_REQUESTS *service_requests)
         _service_requests_clear(service_requests);
 }
 
-static int repair_requests_init(REPAIR_REQUESTS *repair_requests)
-{
-    _Static_assert(sizeof(*(repair_requests)->array) == sizeof(REPAIR_REQUEST), "Error test2"); // TODO remove
-
-    if (db_alloc((void **)&repair_requests->array, MIN_REPAIR_REQUESTS_INITIAL * sizeof(*(repair_requests)->array)) == 0) {
-        //SERVICE_REQUESTS optional_service_requests; is not initialized because it is optional
-        repair_requests->array_max_len = MIN_REPAIR_REQUESTS_INITIAL;
-        return 0;
-    }
-
-    return DB_UNABLE_TO_INIT_REPAIR_REQUEST_IN_CLIENT_DATA;
-}
-
-void _repair_request_clear(REPAIR_REQUEST *request)
+void _repair_request_clear(REPAIR *request)
 {
     size_t array_max_len = request->optional_service_requests.array_max_len;
-    SERVICE_REQUEST *service_request_array = request->optional_service_requests.array;
+    SERVICE *service_request_array = request->optional_service_requests.array;
     if (service_request_array)
         while (request->optional_service_requests.n > 0) {
-            SERVICE_REQUEST *service_request_ptr = &request->optional_service_requests.array[--(request->optional_service_requests.n)];
-            _service_requests_clear(service_request_ptr);
+            SERVICE *service_request_ptr = &request->optional_service_requests.array[--(request->optional_service_requests.n)];
+            //_service_requests_clear(service_request_ptr);
+            explicit_bzero(service_request_ptr, sizeof(*service_request_ptr));
         }
 
     DB_CLEAR_NON_NULL_ELEMENT(request)
@@ -49,7 +38,7 @@ void _repair_request_clear(REPAIR_REQUEST *request)
     request->optional_service_requests.array_max_len = array_max_len;
 }
 
-void repair_request_clear(REPAIR_REQUEST *request)
+void repair_request_clear(REPAIR *request)
 {
     if (request)
         _repair_request_clear(request);
@@ -59,7 +48,7 @@ static void _repair_requests_clear(REPAIR_REQUESTS *requests)
 {
     if (requests->array)
         while (requests->n > 0) {
-            REPAIR_REQUEST *repair_request_ptr = &requests->array[--(requests->n)];
+            REPAIR *repair_request_ptr = &requests->array[--(requests->n)];
 
             _repair_request_clear(repair_request_ptr);
         }
@@ -80,7 +69,7 @@ static void repair_requests_free(REPAIR_REQUESTS *repair_requests)
 
         // For each array, free optional_service_requests arrays (if alloc'd)
         while (repair_requests->n > 0) {
-            REPAIR_REQUEST *repair_request_ptr = &repair_requests->array[--(repair_requests->n)];
+            REPAIR *repair_request_ptr = &repair_requests->array[--(repair_requests->n)];
             SERVICE_REQUESTS *optional_service_requests = &repair_request_ptr->optional_service_requests;
             // Last child array: service request
             DB_ARRAY_FREE(optional_service_requests)
@@ -93,16 +82,6 @@ static void repair_requests_free(REPAIR_REQUESTS *repair_requests)
 }
 
 // BEGIN CLIENT DATA INITIALIZATION
-
-static int client_data_requests_init(CLIENT_DATA_REQUESTS *client_data_request)
-{
-    if (db_alloc((void **)&(client_data_request)->array, MIN_CLIENT_DATA_REQUESTS_INITIAL * sizeof(*(client_data_request)->array)) == 0) {
-        (client_data_request)->array_max_len = MIN_CLIENT_DATA_REQUESTS_INITIAL;
-        return 0;
-    }
-
-    return DB_UNABLE_TO_INIT_CLIENT_DATA_REQUEST_REQUEST_ARRAY;
-}
 
 static void client_data_requests_free(CLIENT_DATA_REQUESTS *client_data_request)
 {
@@ -125,7 +104,7 @@ static void client_data_requests_free(CLIENT_DATA_REQUESTS *client_data_request)
 // BEGIN CLEAR ALL EDIT/ADD/DELETE records (NOT STORED IN DATABASE)
 static void _client_data_clear(CLIENT_DATA *client_data) {
     size_t array_max_len = client_data->repair_requests.array_max_len;
-    REPAIR_REQUEST *array = client_data->repair_requests.array;
+    REPAIR *array = client_data->repair_requests.array;
  
     _repair_requests_clear(&client_data->repair_requests);
     DB_CLEAR_NON_NULL_ELEMENT(client_data)
@@ -146,7 +125,7 @@ _Static_assert(sizeof(CLIENT_DATA) == sizeof(*client_data), "Error test");
 // BEGIN CLIENT MANIPULATION
 int technician_data_requests_init(TECHNICIAN_DATA_REQUESTS **requests)
 {
-    if (db_alloc((void **)requests, sizeof(*requests)) == 0)
+    if (db_alloc((void **)requests, sizeof(**requests)) == 0)
         return 0;
 
     return DB_UNABLE_TO_INIT_TECHNICIAN_DATA_REQUESTS;
@@ -207,7 +186,7 @@ void technician_data_requests_clear(TECHNICIAN_DATA_REQUESTS *requests)
     }
 }
 
-GROW_ARRAY_FUNC(technician_data_requests, TECHNICIAN_DATA_REQUESTS)
+GROW_ARRAY_FUNC(technician_data_requests, TECHNICIAN_DATA)
 int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA **out, TECHNICIAN_DATA_REQUESTS *in)
 {
     int err = 0;
@@ -217,7 +196,7 @@ int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA
 
         if (in->array) {
             if (in->n >= in->array_max_len) {
-                err = technician_data_requests_grow(&in, 1);
+                err = technician_data_requests_grow(in, 1);
                 if (err)
                     return err;
             }
@@ -250,13 +229,13 @@ int technician_acquire_client_data_requests_from_array(CLIENT_DATA_REQUESTS **ou
     TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_END
 }
 
-GROW_ARRAY_FUNC(client_data_requests, CLIENT_DATA_REQUESTS)
+GROW_ARRAY_FUNC(client_data_requests, CLIENT_DATA)
 int technician_acquire_client_data_from_array(size_t *index, CLIENT_DATA **out, size_t technician_index, TECHNICIAN_DATA_REQUESTS *in)
 {
     TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_BEGIN(
-        (index == NULL) && (out != NULL) && (*out == NULL) && (in != NULL), 
+        (index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL), 
         *out = NULL;
-        *index = NULL;
+        *index = 0;
     )
         if (this_technician_data->client_requests.array) {
             if (this_technician_data->client_requests.n >= this_technician_data->client_requests.array_max_len) {
@@ -295,13 +274,13 @@ int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **out, size_t 
     TECHNICIAN_ACQUIRE_REPAIR_REQUEST_FROM_ARRAY_END
 }
 
-GROW_ARRAY_FUNC(repair_request, REPAIR_REQUESTS)
-int technician_acquire_repair_request_from_array(size_t *index, REPAIR_REQUEST **out, size_t technician_index, size_t client_data_index, TECHNICIAN_DATA_REQUESTS *in)
+GROW_ARRAY_FUNC(repair_request, REPAIR)
+int technician_acquire_repair_request_from_array(size_t *index, REPAIR **out, size_t technician_index, size_t client_data_index, TECHNICIAN_DATA_REQUESTS *in)
 {
     TECHNICIAN_ACQUIRE_REPAIR_REQUEST_FROM_ARRAY_BEGIN(
         (index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL),
-        *index = NULL;
         *out = NULL;
+        *index = 0;
     )
 
         if (this_client_data->repair_requests.array) {
@@ -341,8 +320,8 @@ int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **out, size_
     TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_END
 }
 
-GROW_ARRAY_FUNC(service_request, SERVICE_REQUESTS)
-int technician_acquire_service_request_from_array(size_t *index, SERVICE_REQUEST **out, size_t technician_index, size_t client_data_index, size_t repair_request_index, TECHNICIAN_DATA_REQUESTS *in)
+GROW_ARRAY_FUNC(service_request, SERVICE)
+int technician_acquire_service_request_from_array(size_t *index, SERVICE **out, size_t technician_index, size_t client_data_index, size_t repair_request_index, TECHNICIAN_DATA_REQUESTS *in)
 {
     TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_BEGIN(
         (index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL),

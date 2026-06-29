@@ -13,6 +13,7 @@
 // UTF-8 byte size (worst case)
 //Email specs: RFC 5321
 #define EMAIL_ADDRESS_SZ        (255 + 1)
+#define EMAIL_ADDRESS_BUF       EMAIL_ADDRESS_SZ
 #define SHORT_NAME_BUF          (SHORT_NAME_SZ       * 4 + 1)
 #define NAME_BUF                (NAME_SZ             * 4 + 1)
 #define ADDRESS_BUF             (ADDRESS_SZ          * 4 + 1)

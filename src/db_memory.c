@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <db_errors.h>
 
-inline int db_alloc(void **mem, size_t mem_size)
+int db_alloc(void **mem, size_t mem_size)
 {
     if ((mem != NULL) && (*mem == NULL) && (mem_size > 0)) {
         int err = posix_memalign(mem, 64, mem_size);

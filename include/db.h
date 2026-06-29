@@ -32,12 +32,12 @@ typedef struct service_request_t {
   MONETARY_TYPE monetary_type;                     // Monetary type
   int64_t unity_price;                             // Unity price (required)
   char description[LONG_DESCRIPTION_BUF];          // Description (required)
-} SERVICE_REQUEST;
+} SERVICE;
 
 typedef struct service_requests_t {
   size_t n;                                        // Actual array size
   size_t array_max_len;                            // Alloc'd array size
-  SERVICE_REQUEST *array;                           // Alloc'd pointer for array. Recyclable. Must be free
+  SERVICE *array;                                   // Alloc'd pointer for array. Recyclable. Must be free
 } SERVICE_REQUESTS;
 
 // END SERVICE REQUEST
@@ -100,12 +100,12 @@ typedef struct repair_request_t {
   time_t delivery_date;                               // Delivery date
   time_t warranty;                                    // Total day from delivery date
   SERVICE_REQUESTS optional_service_requests;         // ARRAY NULLABLE List of service requests
-} REPAIR_REQUEST;
+} REPAIR;
 
 typedef struct repair_requests_t {
   size_t n;                                        // Actual array size
   size_t array_max_len;                            // Alloc'd array size
-  REPAIR_REQUEST *array;                           // Alloc'd pointer for array. Recyclable. Must be free
+  REPAIR *array;                                   // Alloc'd pointer for array. Recyclable. Must be free
 } REPAIR_REQUESTS;
 
 // END DEVICE DATA
@@ -117,10 +117,10 @@ typedef struct client_data_t {
   int32_t technician_id;                            // FK Technician id
   time_t created_at;                                // Created user timestamp for Solda client user
   char cpf[CPF_BUF];                                // CPF (required) - UNIQUE
-  char name[NAME_SZ];                               // Client name (required)
+  char name[NAME_BUF];                              // Client name (required)
   char address[ADDRESS_BUF];                        // Client address
   char district_city[ADDRESS_BUF];                  // District and city
-  char email[EMAIL_ADDRESS_SZ];                     // (Required) email address;
+  char email[EMAIL_ADDRESS_BUF];                    // (Required) email address;
   char phone_number[PHONE_BUF];                     // (Required) Phone number;
   REPAIR_REQUESTS repair_requests;                  // NOT NULL repair requests
 } CLIENT_DATA;
@@ -151,8 +151,8 @@ typedef struct technician_data_t{
   int32_t id;
   TECHNICIAN_RULES rules;
   time_t created_at;
-  char name[SHORT_NAME_SZ];
-  char email[EMAIL_ADDRESS_SZ];
+  char name[SHORT_NAME_BUF];
+  char email[EMAIL_ADDRESS_BUF];
   CLIENT_DATA_REQUESTS client_requests;
 } TECHNICIAN_DATA;
 
@@ -166,10 +166,10 @@ typedef struct technician_data_requests_t {
 
 // BEGIN SERVICE MANIPULATION
 void service_requests_clear(SERVICE_REQUESTS *);
-void service_request_clear(SERVICE_REQUEST *);
+void service_request_clear(SERVICE *);
 // END SERVICE MANIPULATION
 
-void repair_request_clear(REPAIR_REQUEST *);
+void repair_request_clear(REPAIR *);
 void repair_requests_clear(REPAIR_REQUESTS *);
 
 // END REFACTORING
@@ -185,9 +185,9 @@ void technician_data_requests_clear(TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_client_data_from_array(size_t *, CLIENT_DATA **, size_t, TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_client_data_requests_from_array(CLIENT_DATA_REQUESTS **, size_t, TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_repair_request_from_array(size_t *, REPAIR_REQUEST **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_repair_request_from_array(size_t *, REPAIR **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_service_request_from_array(size_t *, SERVICE_REQUEST **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_service_request_from_array(size_t *, SERVICE **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
 
 // END TECHNICIAN
 #endif

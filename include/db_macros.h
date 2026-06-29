@@ -29,55 +29,32 @@
 
 #define GROW_ARRAY_FUNC(func_name, type) \
 /* plus_n > 0 */ \
-static int func_name##_grow(type **requests, size_t plus_n) \
+static int func_name##_grow(type##_REQUESTS *requests, size_t plus_n) \
 { \
-    plus_n += (*requests)->array_max_len; \
+    plus_n += requests->array_max_len; \
 \
-    DB_ALIGN_VEC_LENGTH(plus_n, MIN_##type##_INITIAL) \
+    DB_ALIGN_VEC_LENGTH(plus_n, MIN_##type##_REQUESTS_INITIAL) \
 \
-    if (MAX_##type##_LIMIT >= plus_n) { \
+    if (MAX_##type##_REQUESTS_LIMIT >= plus_n) { \
             type *new = NULL, *current; \
 \
         if (db_alloc((void **)&new, plus_n * sizeof(type))) \
-            return DB_UNABLE_TO_GROW_AND_MOVE_##type; \
+            return DB_UNABLE_TO_GROW_AND_MOVE_##type##_REQUESTS; \
 \
-        current = (*requests)->array; \
+        current = requests->array; \
 \
-        memcpy((void *)new, (void *)current, (*requests)->n * sizeof(*new)); \
+        memcpy((void *)new, (void *)current, requests->n * sizeof(*new)); \
 \
-        explicit_bzero((void *)current, (*requests)->array_max_len * sizeof(*current)); \
+        explicit_bzero((void *)current, requests->array_max_len * sizeof(*current)); \
         free((void *)current); \
 \
-        (*requests)->array = new; \
-        (*requests)->array_max_len = plus_n; \
+        requests->array = new; \
+        requests->array_max_len = plus_n; \
 \
         return 0; \
     } \
 \
-    return DB_UNABLE_TO_GROW_##type; \
-}
-
-#define ACQUIRE_FUNC(func, arra_grow_func, parent_type, child_type, field) \
-int func(size_t *index, child_type **out, parent_type *in) \
-{ \
-    *out = NULL; \
-    if (in != NULL) { \
-\
-        if (in->field.n >= in->field.array_max_len) { \
-            int err = arra_grow_func##_grow(&in->field, 1); \
-            if (err) \
-                return err; \
-        } \
-\
-        if (index) \
-            *index = in->field.n; \
-\
-        *out = &(in->field.array[in->field.n++]); \
-\
-        return 0; \
-    } \
-\
-    return DB_UNABLE_TO_ADD_##child_type; \
+    return DB_UNABLE_TO_GROW_##type##_REQUESTS; \
 }
 
 #define TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_BEGIN(check, text) \
@@ -92,7 +69,7 @@ int func(size_t *index, child_type **out, parent_type *in) \
  \
                         if (this_client->repair_requests.array) { \
                             if (this_client->repair_requests.n > repair_request_index) { \
-                                REPAIR_REQUEST *this_repair_request = &this_client->repair_requests.array[repair_request_index];
+                                REPAIR *this_repair_request = &this_client->repair_requests.array[repair_request_index];
 
 
 #define TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_END \
@@ -162,5 +139,7 @@ int func(size_t *index, child_type **out, parent_type *in) \
         }\
 \
         return DB_EMPTY_TECHNICIAN_REQUEST_FOR_CLIENT_DATA_REQUESTS;\
-    }
+    } \
+    return DB_UNABLE_TO_ACQUIRE_TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY;
+
 #endif
