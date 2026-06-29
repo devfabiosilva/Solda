@@ -164,40 +164,30 @@ typedef struct technician_data_requests_t {
 
 //END TECHNICIAN TABLE
 
-// BEGIN REPAIR MANIPULATION
-int repair_acquire_service(size_t *, SERVICE_REQUEST **, REPAIR_REQUEST *);
-// END REPAIR MANIPULATION
-
-// BEGIN CLIENT_DATA MANIPULATION
-//void client_data_clear(CLIENT_DATA *);
-// END CLIENT_DATA MANIPULATION
-
-// BEGIN REPAIR MANIPULATION
-void repair_request_clear(REPAIR_REQUEST *);
-void repair_requests_clear(REPAIR_REQUESTS *);
-int client_acquire_repair(size_t *, REPAIR_REQUEST **, CLIENT_DATA *);
-// END REPAIR MANIPULATION
-
 // BEGIN SERVICE MANIPULATION
 void service_requests_clear(SERVICE_REQUESTS *);
+void service_request_clear(SERVICE_REQUEST *);
 // END SERVICE MANIPULATION
 
-// BEGIN REFACTORING CLIENT REQUESTS
-// TODO implement prototype data
-int client_acquire_client_data_from_array(size_t *, CLIENT_DATA **, CLIENT_DATA_REQUESTS *);
-int client_aquire_repair_request_data(size_t *, REPAIR_REQUEST **, CLIENT_DATA *);
-int client_aquire_repair_data_requests(REPAIR_REQUESTS **, CLIENT_DATA *);
-void client_data_clear(CLIENT_DATA *);
-void client_data_requests_clear(CLIENT_DATA_REQUESTS *);
+void repair_request_clear(REPAIR_REQUEST *);
+void repair_requests_clear(REPAIR_REQUESTS *);
+
 // END REFACTORING
 
 // BEGIN TECHNICIAN
 int technician_data_requests_init(TECHNICIAN_DATA_REQUESTS **);
 void technician_data_requests_free(TECHNICIAN_DATA_REQUESTS **);
+
 int technician_acquire_technician_data_from_array(size_t *, TECHNICIAN_DATA **, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_client_data(size_t *, CLIENT_DATA **, TECHNICIAN_DATA *);
-int technician_acquire_client_data_requests(CLIENT_DATA_REQUESTS **, TECHNICIAN_DATA *);
 void technician_data_clear(TECHNICIAN_DATA *);
 void technician_data_requests_clear(TECHNICIAN_DATA_REQUESTS *);
+
+int technician_acquire_client_data_from_array(size_t *, CLIENT_DATA **, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_client_data_requests_from_array(CLIENT_DATA_REQUESTS **, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_repair_request_from_array(size_t *, REPAIR_REQUEST **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_service_request_from_array(size_t *, SERVICE_REQUEST **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+
 // END TECHNICIAN
 #endif

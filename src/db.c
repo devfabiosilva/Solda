@@ -4,6 +4,12 @@
 #include <db_errors.h>
 #include <db_macros.h>
 
+inline void service_request_clear(SERVICE_REQUEST *service_request)
+{
+    if (service_request)
+        explicit_bzero(service_request, sizeof(*explicit_bzero));
+}
+
 static void _service_requests_clear(SERVICE_REQUESTS *service_requests)
 {
     DB_ARRAY_CLEAR(service_requests)
@@ -85,35 +91,7 @@ static void repair_requests_free(REPAIR_REQUESTS *repair_requests)
         repair_requests->array = NULL;
     }
 }
-/*
-GROW_ARRAY_FUNC(service_request, SERVICE_REQUESTS)
-int repair_new_service_request(size_t *service_request_index, SERVICE_REQUEST **service_request_out, REPAIR_REQUEST *repair_request)
-{
-    *service_request_out = NULL;
-    if (repair_request) {
-        if (repair_request->optional_service_requests.array) {
-            if (repair_request->optional_service_requests.n >= repair_request->optional_service_requests.array_max_len) {
-                int err = service_request_grow(&repair_request->optional_service_requests, 1);
-                if (err)
-                    return err;
-            }
-        } else if (db_alloc((void **)&repair_request->optional_service_requests.array, MIN_SERVICE_REQUESTS_INITIAL * sizeof(*(&repair_request->optional_service_requests)->array)) == 0) {
-            // Optional. If new at first time, create array element
-            repair_request->optional_service_requests.array_max_len = MIN_SERVICE_REQUESTS_INITIAL;
-        } else
-            return DB_UNABLE_TO_INIT_SERVICE_REQUESTS_IN_REPAIR_REQUEST;
 
-        if (service_request_index)
-            *service_request_index = repair_request->optional_service_requests.n;
-    
-        *service_request_out = &repair_request->optional_service_requests.array[repair_request->optional_service_requests.n++];
-
-        return 0;
-    }
-
-    return DB_UNABLE_TO_ADD_SERVICE_REQUEST;
-}
-*/
 // BEGIN CLIENT DATA INITIALIZATION
 
 static int client_data_requests_init(CLIENT_DATA_REQUESTS *client_data_request)
@@ -128,7 +106,7 @@ static int client_data_requests_init(CLIENT_DATA_REQUESTS *client_data_request)
 
 static void client_data_requests_free(CLIENT_DATA_REQUESTS *client_data_request)
 {
-    if ((client_data_request)->array) {
+    if (client_data_request->array) {
 
         // For each array, free arrays (if alloc'd)
         while (client_data_request->n > 0) {
@@ -165,37 +143,6 @@ _Static_assert(sizeof(CLIENT_DATA) == sizeof(*client_data), "Error test");
 
 // END CLEAR ALL EDIT/ADD/DELETE records (NOT STORED IN DATABASE)
 
-// BEGIN NEW REPAIR BEFORE SAVE
-// REPAIR_REQUEST **request and *request ARE NOT NULL
-GROW_ARRAY_FUNC(repair_request, REPAIR_REQUESTS)
-ACQUIRE_FUNC(client_acquire_repair, repair_request, CLIENT_DATA, REPAIR_REQUEST, repair_requests)
-/*
-int client_acquire_repair(size_t *index, REPAIR_REQUEST **out, CLIENT_DATA *in)
-{
-    *out = NULL;
-    if (in != NULL) {
-
-        if (in->repair_requests.n >= in->repair_requests.array_max_len) {
-            int err = repair_request_grow(&in->repair_requests, 1);
-            if (err)
-                return err;
-        }
-
-        if (index)
-            *index = in->repair_requests.n;
-
-        *out = &(in->repair_requests.array[in->repair_requests.n++]);
-
-        return 0;
-    }
-
-    return DB_UNABLE_TO_ADD_REPAIR_REQUEST;
-}
-*/
-GROW_ARRAY_FUNC(service_request, SERVICE_REQUESTS)
-ACQUIRE_FUNC(client_acquire_repair, service_request, REPAIR_REQUEST, SERVICE_REQUEST, optional_service_requests)
-// END NEW REPAIR BEFORE SAVE
-
 // BEGIN CLIENT MANIPULATION
 int technician_data_requests_init(TECHNICIAN_DATA_REQUESTS **requests)
 {
@@ -205,50 +152,21 @@ int technician_data_requests_init(TECHNICIAN_DATA_REQUESTS **requests)
     return DB_UNABLE_TO_INIT_TECHNICIAN_DATA_REQUESTS;
 }
 
-GROW_ARRAY_FUNC(client_data_requests, CLIENT_DATA_REQUESTS)
-int technician_acquire_client_data(size_t *index, CLIENT_DATA **out, TECHNICIAN_DATA *in)
-{
-    int err = 0;
-    if ((index != NULL) && (out != NULL) && (in != NULL)) {
-        *index = 0;
-        *out = NULL;
-
-        if (in->client_requests.array) {
-            if (in->client_requests.n >= in->client_requests.array_max_len) {
-                err = client_data_requests_grow(&in->client_requests, 1);
-                if (err)
-                    return err;
-            }
-
-            *index = in->client_requests.n;
-            *out = &(in->client_requests.array[in->client_requests.n++]);
-
-        } else if (db_alloc((void **)&(in->client_requests.array), MIN_CLIENT_DATA_REQUESTS_INITIAL * sizeof(*(in->client_requests.array))) == 0) {
-            in->client_requests.array_max_len = MIN_CLIENT_DATA_REQUESTS_INITIAL; 
-            *index = 0;
-            in->client_requests.n = 1;
-            *out = &in->client_requests.array[0];
-        } else 
-            err = DB_UNABLE_TO_ALLOC_ACQUIRE_CLIENT_DATA;
-    } else
-        err = DB_UNABLE_TO_ACQUIRE_CLIENT_DATA;
-
-    return err;
-}
-
 void technician_data_requests_free(TECHNICIAN_DATA_REQUESTS **requests)
 {
     if ((requests != NULL) && (*requests != NULL)) {
 
-        if ((*requests)->array)
+        if ((*requests)->array) {
             while ((*requests)->n > 0) {
                 TECHNICIAN_DATA *technician_data_ptr = &(*requests)->array[--(*requests)->n];
                 client_data_requests_free(&technician_data_ptr->client_requests);
             }
 
-        explicit_bzero((void *)(*requests)->array, (*requests)->array_max_len * sizeof(*((*requests)->array)));
-        free((void *)(*requests)->array);
-        (*requests)->array = NULL;
+            explicit_bzero((void *)(*requests)->array, (*requests)->array_max_len * sizeof(*((*requests)->array)));
+            free((void *)(*requests)->array);
+            (*requests)->array = NULL;
+        }
+
         free(*requests);
         *requests = NULL;
     }
@@ -321,23 +239,138 @@ int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA
     return err;
 }
 
-int technician_acquire_client_data_requests(CLIENT_DATA_REQUESTS **out, TECHNICIAN_DATA *in)
+int technician_acquire_client_data_requests_from_array(CLIENT_DATA_REQUESTS **out, size_t technician_index, TECHNICIAN_DATA_REQUESTS *in)
 {
-  int err = 0;
-  if ((out != NULL) && (*out == NULL) && (in != NULL)) {
-    *out = &in->client_requests;
-    if (in->client_requests.array == NULL) {
-        if (db_alloc((void **)&(in->client_requests.array), MIN_CLIENT_DATA_REQUESTS_INITIAL * sizeof(*(in->client_requests.array))) == 0) {
-            in->client_requests.array_max_len = MIN_CLIENT_DATA_REQUESTS_INITIAL; 
-            in->client_requests.n = 0;
-        } else {
-            *out = NULL;
-            err = DB_UNABLE_TO_ACQUIRE_AND_ALLOC_CLIENT_DATA_REQUESTS_FROM_TECHNICIAN_DATA;
-        }
-    }
-  } else
-    err = DB_UNABLE_TO_ACQUIRE_CLIENT_DATA_REQUESTS_FROM_TECHNICIAN_DATA;
-
-  return err;
+    TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_BEGIN(
+        (out != NULL) && (*out == NULL) && (in != NULL),
+        *out = NULL;
+    )
+        *out = &this_technician_data->client_requests;
+        return 0;
+    TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_END
 }
+
+GROW_ARRAY_FUNC(client_data_requests, CLIENT_DATA_REQUESTS)
+int technician_acquire_client_data_from_array(size_t *index, CLIENT_DATA **out, size_t technician_index, TECHNICIAN_DATA_REQUESTS *in)
+{
+    TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_BEGIN(
+        (index == NULL) && (out != NULL) && (*out == NULL) && (in != NULL), 
+        *out = NULL;
+        *index = NULL;
+    )
+        if (this_technician_data->client_requests.array) {
+            if (this_technician_data->client_requests.n >= this_technician_data->client_requests.array_max_len) {
+                int err = client_data_requests_grow(&this_technician_data->client_requests, 1);
+                if (err)
+                    return err;
+            }
+
+            *index = this_technician_data->client_requests.n;
+            *out = &this_technician_data->client_requests.array[this_technician_data->client_requests.n++];
+
+            return 0;
+        }
+
+        if (db_alloc((void **)&(this_technician_data->client_requests.array), MIN_CLIENT_DATA_REQUESTS_INITIAL * sizeof(*(this_technician_data->client_requests.array))) == 0) {
+            this_technician_data->client_requests.array_max_len = MIN_CLIENT_DATA_REQUESTS_INITIAL;
+            *index = 0;
+            this_technician_data->client_requests.n = 1;
+            *out = &this_technician_data->client_requests.array[0];
+            return 0;
+        }
+
+        return DB_UNABLE_TO_ACQUIRE_AND_ALLOC_DATA_REQUESTS_FROM_TECHNICIAN_DATA_REQUESTS;
+    TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_END
+}
+
+int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **out, size_t technician_index, size_t client_data_index, TECHNICIAN_DATA_REQUESTS *in)
+{
+    TECHNICIAN_ACQUIRE_REPAIR_REQUEST_FROM_ARRAY_BEGIN(
+        (out != NULL) && (*out == NULL) && (in != NULL), 
+        *out = NULL;
+    )
+        *out = &this_client_data->repair_requests;
+
+        return 0;
+    TECHNICIAN_ACQUIRE_REPAIR_REQUEST_FROM_ARRAY_END
+}
+
+GROW_ARRAY_FUNC(repair_request, REPAIR_REQUESTS)
+int technician_acquire_repair_request_from_array(size_t *index, REPAIR_REQUEST **out, size_t technician_index, size_t client_data_index, TECHNICIAN_DATA_REQUESTS *in)
+{
+    TECHNICIAN_ACQUIRE_REPAIR_REQUEST_FROM_ARRAY_BEGIN(
+        (index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL),
+        *index = NULL;
+        *out = NULL;
+    )
+
+        if (this_client_data->repair_requests.array) {
+            if (this_client_data->repair_requests.n >= this_client_data->repair_requests.array_max_len) {
+                int err = repair_request_grow(&this_client_data->repair_requests, 1);
+                if (err)
+                    return err;
+            }
+
+            *index = this_client_data->repair_requests.n;
+            *out = &this_client_data->repair_requests.array[this_client_data->repair_requests.n++];
+
+            return 0;
+        }
+
+        if (db_alloc((void **)&(this_client_data->repair_requests.array), MIN_REPAIR_REQUESTS_INITIAL * sizeof(*(this_client_data->repair_requests.array))) == 0) {
+            this_client_data->repair_requests.array_max_len = MIN_REPAIR_REQUESTS_INITIAL;
+            *index = 0;
+            this_client_data->repair_requests.n = 1;
+            *out = &this_client_data->repair_requests.array[0];
+            return 0;
+        }
+
+        return DB_UNABLE_TO_ACQUIRE_AND_ALLOC_REPAIR_REQUEST_FROM_TECHNICIAN_DATA_REQUESTS;
+
+    TECHNICIAN_ACQUIRE_REPAIR_REQUEST_FROM_ARRAY_END
+}
+
+int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **out, size_t technician_index, size_t client_data_index, size_t repair_request_index, TECHNICIAN_DATA_REQUESTS *in)
+{
+    TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_BEGIN(
+        (out != NULL) && (*out == NULL) && (in != NULL),
+        *out = NULL;
+    )
+        *out = &this_repair_request->optional_service_requests;
+        return 0;
+    TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_END
+}
+
+GROW_ARRAY_FUNC(service_request, SERVICE_REQUESTS)
+int technician_acquire_service_request_from_array(size_t *index, SERVICE_REQUEST **out, size_t technician_index, size_t client_data_index, size_t repair_request_index, TECHNICIAN_DATA_REQUESTS *in)
+{
+    TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_BEGIN(
+        (index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL),
+        *out = NULL;
+        *index = 0;
+    )
+        if (this_repair_request->optional_service_requests.array) {
+            if (this_repair_request->optional_service_requests.n >= this_repair_request->optional_service_requests.array_max_len) {
+                int err = service_request_grow(&this_repair_request->optional_service_requests, 1);
+                if (err)
+                    return err;
+            }
+
+            *index = this_repair_request->optional_service_requests.n;
+            *out = &this_repair_request->optional_service_requests.array[this_repair_request->optional_service_requests.n++];
+            return 0;
+        }
+
+        if (db_alloc((void **)&(this_repair_request->optional_service_requests.array), MIN_SERVICE_REQUESTS_INITIAL * sizeof(*(this_repair_request->optional_service_requests.array))) == 0) {
+            this_repair_request->optional_service_requests.array_max_len = MIN_SERVICE_REQUESTS_INITIAL;
+            *index = 0;
+            this_repair_request->optional_service_requests.n = 1;
+            *out = &this_repair_request->optional_service_requests.array[0];
+            return 0;
+        }
+
+        return DB_UNABLE_TO_ACQUIRE_AND_ALLOC_SERVICE_REQUESTS_FROM_TECHNICIAN_DATA_REQUESTS;
+    TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_END
+}
+
 // END CLIENT MANIPULATION
