@@ -110,12 +110,22 @@ typedef struct repair_requests_t {
 
 // END DEVICE DATA
 
+// Only on edit/update mode. This field will NOT record at database
+typedef enum client_data_flag_e {
+  CLIENT_DATA_INIT = 0,
+  CLIENT_DATA_NEW,
+  CLIENT_DATA_UPDATE,
+  CLIENT_DATA_DELETE,
+  CLIENT_DATA_NEW_AND_DELETED_BEFORE_SAVE
+} CLIENT_DATA_FLAG;
+
 // BEGIN CLIENT USER TABLE
 typedef struct client_data_t {
   bool touched;                                     // For edit/add/update only flag: true if is used (read to flush in database)
   int32_t id;                                       // PK (required). TODO check sizeof Postgres INTEGER
   int32_t technician_id;                            // FK Technician id
   time_t created_at;                                // Created user timestamp for Solda client user
+  CLIENT_DATA_FLAG flag;                            // Flag. This will not be flushed in database
   char cpf[CPF_BUF];                                // CPF (required) - UNIQUE
   char name[NAME_BUF];                              // Client name (required)
   char address[ADDRESS_BUF];                        // Client address
@@ -146,13 +156,25 @@ typedef enum technician_rules_e {
 } TECHNICIAN_RULES;
 #undef SET_TECHNICIAN_RULES
 
+// Only on edit/update mode. This field will NOT record at database
+typedef enum technician_data_flag_e {
+  TECHNICIAN_DATA_INIT = 0,
+  TECHNICIAN_DATA_NEW,
+  TECHNICIAN_DATA_UPDATE,
+  TECHNICIAN_DATA_DELETE,
+  TECHNICIAN_DATA_NEW_AND_DELETED_BEFORE_SAVE
+} TECHNICIAN_DATA_FLAG;
+
 typedef struct technician_data_t{
   bool touched;
   int32_t id;
+  int32_t version;
   TECHNICIAN_RULES rules;
+  TECHNICIAN_DATA_FLAG flag;
   time_t created_at;
   char name[SHORT_NAME_BUF];
   char email[EMAIL_ADDRESS_BUF];
+  char phone_number[PHONE_BUF];                     // (Required) Phone number;
   CLIENT_DATA_REQUESTS client_requests;
 } TECHNICIAN_DATA;
 
@@ -188,6 +210,8 @@ int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **, size_t, si
 int technician_acquire_repair_request_from_array(size_t *, REPAIR **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_service_request_from_array(size_t *, SERVICE **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+
+int technician_add(TECHNICIAN_DATA *, ...);
 
 // END TECHNICIAN
 #endif
