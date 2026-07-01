@@ -1,5 +1,6 @@
  #include <db.h>
  #include <stdio.h>
+ #include <db_command.h>
 
  int main(int argc, char **argv)
  {
@@ -20,8 +21,19 @@
 
     printf("\ntechnician_data index %d and pointer %p", (int)technician_index, technician_data);
 
+    err = TECHNICIAN_EXECUTE_ADD(technician_data,
+        TECHNICIAN_NAME("name ABC"),
+        TECHNICIAN_EMAIL("email@email.com"),
+        TECHNICIAN_PHONE_NUMBER("12345-67890"),
+        TECHNICIAN_ADD_RULES(IS_ROOT_ADMIN_SUPREME)
+    )
+
+    if (err) goto main_exit;
+
     size_t client_data_index;
     CLIENT_DATA *client_data = NULL;
+
+    printf("\nValue of %p of %s\n", technician_data, technician_data->name);
 
     if ((err = technician_acquire_client_data_from_array(
         &client_data_index,

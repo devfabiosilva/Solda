@@ -162,7 +162,8 @@ typedef enum technician_data_flag_e {
   TECHNICIAN_DATA_NEW,
   TECHNICIAN_DATA_UPDATE,
   TECHNICIAN_DATA_DELETE,
-  TECHNICIAN_DATA_NEW_AND_DELETED_BEFORE_SAVE
+  TECHNICIAN_DATA_NEW_AND_DELETED_BEFORE_SAVE,
+  TECHNICIAN_READ_FROM_DATABASE
 } TECHNICIAN_DATA_FLAG;
 
 typedef struct technician_data_t{
@@ -210,8 +211,6 @@ int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **, size_t, si
 int technician_acquire_repair_request_from_array(size_t *, REPAIR **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
 int technician_acquire_service_request_from_array(size_t *, SERVICE **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
-
-int technician_add(TECHNICIAN_DATA *, ...);
 
 // END TECHNICIAN
 #endif

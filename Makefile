@@ -11,7 +11,7 @@ all: main
 
 main:
 	@echo "Building test ..."
-	@$(CC) -o $(CURDIR)/$(PROGNAME) $(FLAG) $(SRCDIR)/db_memory.c $(SRCDIR)/db.c main.c
+	@$(CC) -o $(CURDIR)/$(PROGNAME) $(FLAG) $(SRCDIR)/db_memory.c $(SRCDIR)/db_command.c $(SRCDIR)/db.c main.c
 	@echo "Finished"
 
 .PHONY:

@@ -352,10 +352,5 @@ int technician_acquire_service_request_from_array(size_t *index, SERVICE **out, 
     TECHNICIAN_ACQUIRE_SERVICE_REQUEST_FROM_ARRAY_END
 }
 
-int technician_add(TECHNICIAN_DATA *technician_data, ...)
-{
-// TODO IMPLEMENT
-    return 0;
-}
 
 // END CLIENT MANIPULATION
