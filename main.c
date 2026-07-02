@@ -1,6 +1,7 @@
  #include <db.h>
  #include <stdio.h>
  #include <db_command.h>
+ #include <time.h>
 
  int main(int argc, char **argv)
  {
@@ -44,6 +45,21 @@
 
     printf("\nclient_data index %d and pointer %p", (int)client_data_index, client_data);
 
+    err = CLIENT_EXECUTE_ADD(
+            client_data,
+            CLIENT_TECHNICIAN_ID(technician_index),
+            CLIENT_CPF("111.111.111.00"),
+            CLIENT_NAME("Fernanda Silva"),
+            CLIENT_ADDRESS("Client Address"),
+            CLIENT_DISTRICT_CITY("Rua XYZ Quadra A"),
+            CLIENT_EMAIL("fernanda@email.com"),
+            CLIENT_PHONE_NUMBER("(21) 91234-6789")
+        )
+
+    if (err) goto main_exit;
+
+    printf("\nValue of %p of %s\n", client_data, client_data->name);
+
     size_t repair_request_index;
     REPAIR *repair = NULL;
     if ((err = technician_acquire_repair_request_from_array(
@@ -56,6 +72,26 @@
 
     printf("\nrepair index %d and pointer %p", (int)repair_request_index, repair);
 
+    err = REPAIR_EXECUTE_ADD(
+        repair,
+        REPAIR_ADD_CLIENT_ID(1234),
+        REPAIR_ADD_IS_BUDGET(true),
+        REPAIR_ADD_DEVICE_PROBLEM(DEVICE_DOES_NOT_TURN_ON),
+        REPAIR_ADD_BRAND_MODEL("MODEL ABC"),
+        REPAIR_ADD_SERIAL_NUMBER("1234567890"),
+        REPAIR_ADD_CLAIMED_DEFECT("Device Problem"),
+        REPAIR_ADD_OBSERVATION("Observations test"),
+        REPAIR_ADD_MONETARY_TYPE(BITCOIN),
+        REPAIR_ADD_EXPECTED_BUDGET_DATE(time(NULL)),
+        REPAIR_ADD_EXPECTED_DELIVERY_DATE(time(NULL)),
+        REPAIR_ADD_LABOR_BUDGET(18000),
+        REPAIR_ADD_DELIVERY_DATE(time(NULL)),
+        REPAIR_ADD_WARRANTY(time(NULL))
+    )
+
+    if (err) goto main_exit;
+
+    printf("\nValue of %p of %s\n", repair, repair->claimed_defect);
     size_t service_request_index;
     SERVICE *service = NULL;
     if ((err = technician_acquire_service_request_from_array(

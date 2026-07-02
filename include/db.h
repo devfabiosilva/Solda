@@ -78,12 +78,14 @@ typedef enum repair_request_flag_e {
   REPAIR_REQUEST_NEW,
   REPAIR_REQUEST_UPDATE,
   REPAIR_REQUEST_DELETE,
-  REPAIR_REQUEST_NEW_AND_DELETED_BEFORE_SAVE
+  REPAIR_REQUEST_NEW_AND_DELETED_BEFORE_SAVE,
+  REPAIR_REQUEST_READ_FROM_DATABASE
 } REPAIR_REQUEST_FLAG;
 
 typedef struct repair_request_t {
   int32_t id;                                         // PK repair request
   int32_t client_id;                                  // FK For client id
+  bool touched;                                       // is touched?
   time_t created_at;                                  // Created request timestamp for Solda client user
   REPAIR_REQUEST_STATUS status;                       // Request status
   bool is_bugdet;                                     // Binary: Bugdet or Work order
@@ -116,7 +118,8 @@ typedef enum client_data_flag_e {
   CLIENT_DATA_NEW,
   CLIENT_DATA_UPDATE,
   CLIENT_DATA_DELETE,
-  CLIENT_DATA_NEW_AND_DELETED_BEFORE_SAVE
+  CLIENT_DATA_NEW_AND_DELETED_BEFORE_SAVE,
+  CLIENT_DATA_READ_FROM_DATABASE
 } CLIENT_DATA_FLAG;
 
 // BEGIN CLIENT USER TABLE

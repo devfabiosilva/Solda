@@ -3,7 +3,7 @@ STRIP=strip
 CURDIR=$(PWD)
 INCLUDEDIR=$(CURDIR)/include
 
-FLAG=-O2 -I$(INCLUDEDIR) -g -fsanitize=address,leak -Wall
+FLAG=-O0 -I$(INCLUDEDIR) -g -fsanitize=address,leak -Wall
 PROGNAME=test.t
 SRCDIR=$(CURDIR)/src
 all: main
