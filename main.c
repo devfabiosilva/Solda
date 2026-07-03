@@ -102,6 +102,18 @@
 
     printf("\nservice index %d and pointer %p", (int)service_request_index, service);
 
+    err = SERVICE_EXECUTE_ADD(
+        service,
+        SERVICE_REPAIR_REQUEST_ID(1234),
+        SERVICE_QUANTITY(172),
+        SERVICE_MONETARY_TYPE(US_DOLLAR),
+        SERVICE_UNITY_PRICE(29030),
+        SERVICE_DESCRIPTION("Service description goes here")
+    )
+
+    if (err == 0)
+        printf("\nValue of %p of %s\n", service, service->description);
+
 main_exit:
     printf("\ntechnician_requests pointer %p\n", technician_requests);
     technician_data_requests_free(&technician_requests);

@@ -20,12 +20,14 @@ typedef enum service_request_flag_e {
   SERVICE_REQUEST_NEW,
   SERVICE_REQUEST_UPDATE,
   SERVICE_REQUEST_DELETE,
-  SERVICE_REQUEST_NEW_AND_DELETED_BEFORE_SAVE
+  SERVICE_REQUEST_NEW_AND_DELETED_BEFORE_SAVE,
+  SERVICE_REQUEST_READ_FROM_DATABASE
 } SERVICE_REQUEST_FLAG;
 
 typedef struct service_request_t {
   uint32_t id;                                     // PK
   uint32_t repair_request_id;                      // FK for request
+  bool touched;
   time_t created_at;                               // Created service request
   SERVICE_REQUEST_FLAG flag;                       // Only on edit/update mode. This field will NOT record at database
   int32_t quantity;                                // Quantity > 0

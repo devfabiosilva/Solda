@@ -213,3 +213,86 @@ repair_add_exit1:
     }
     return DB_REPAIR_ADD_INVALID;
 }
+
+int service_add(SERVICE *service, ...)
+{
+    if (service) {
+        SERVICE_REQUEST_FLAG flag = service->flag;
+
+        switch (flag) {
+            case SERVICE_REQUEST_DELETE:
+            case SERVICE_REQUEST_READ_FROM_DATABASE:
+                return DB_SERVICE_REQUEST_ADD_UNABLE_TO_APPEND_DATA;
+            case SERVICE_REQUEST_INIT:
+            case SERVICE_REQUEST_NEW_AND_DELETED_BEFORE_SAVE:
+                flag = SERVICE_REQUEST_NEW;
+            default:
+        }
+        va_list args;
+
+        va_start(args, service);
+        DB_ADD_ENUM_COMMAND command;
+        void *p;
+        int err = 0;
+        while ((command = (DB_ADD_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) {
+            p = (void *)va_arg(args, void *);
+            switch (command) {
+                case DB_SERVICE_REPAIR_REQUEST_ID:
+                    size_t id_as_size_t = (size_t)((intptr_t)p);
+                    if (id_as_size_t <= INT32_MAX) {
+                        service->repair_request_id = (int32_t)id_as_size_t;
+                        break;
+                    }
+                    err = DB_SERVICE_ADD_REPAIR_REQUEST_ID_LIMIT_REACHED;
+                    goto service_add_exit1;
+                case DB_SERVICE_QUANTITY:
+                    int32_t quantity = (int32_t)((uintptr_t)p);
+                    if (quantity > 0) {
+                        service->quantity = quantity;
+                        break;
+                    }
+                    err = DB_SERVICE_ADD_QUANTITY_INVALID;
+                    goto service_add_exit1;
+                case DB_SERVICE_MONETARY_TYPE:
+                    service->monetary_type = (MONETARY_TYPE)((uintptr_t)p);
+                    break;
+                case DB_SERVICE_UNITY_PRICE:
+                    service->unity_price = (int64_t)((uintptr_t)p);
+                    break;
+                case DB_SERVICE_DESCRIPTION:
+                    DB_COPY_STR_FROM(service->description, (char *)p)
+                    break;
+                default:
+                    err = DB_SERVICE_INVALID_COMMAND;
+                    goto service_add_exit1;
+            }
+        }
+
+service_add_exit1:
+        va_end(args);
+
+        if (err == 0) {
+            service->touched = true;
+            service->flag = flag;
+        }
+        return 0;
+    }
+    return DB_SERVICE_INVALID;
+}
+
+int technician_update(TECHNICIAN_DATA *technician_data, ...)
+{
+    if (technician_data) {
+        switch (technician_data->flag) {
+            case TECHNICIAN_READ_FROM_DATABASE:
+            case TECHNICIAN_DATA_UPDATE:
+                break;
+            default:
+                return DB_TECHNICIAN_DATA_UNABLE_TO_UPDATE;
+        }
+        // TODO IMPLEMENT UPDATE
+        return 0;
+    }
+
+    return DB_TECHNICIAN_DATA_UPDATE_INVALID;
+}
