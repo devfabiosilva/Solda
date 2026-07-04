@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <db_config.h>
 
+#define DB_SET_TOUCHED(x) (1<<x)
+
 typedef enum monetary_type_e {
   BRL = 0,
   US_DOLLAR,
@@ -126,9 +128,10 @@ typedef enum client_data_flag_e {
 
 // BEGIN CLIENT USER TABLE
 typedef struct client_data_t {
-  bool touched;                                     // For edit/add/update only flag: true if is used (read to flush in database)
+  int32_t touched;                                  // For edit/add/update only flag: true if is used (read to flush in database)
   int32_t id;                                       // PK (required). TODO check sizeof Postgres INTEGER
   int32_t technician_id;                            // FK Technician id
+  int32_t version;                                  //
   time_t created_at;                                // Created user timestamp for Solda client user
   CLIENT_DATA_FLAG flag;                            // Flag. This will not be flushed in database
   char cpf[CPF_BUF];                                // CPF (required) - UNIQUE
@@ -170,7 +173,6 @@ typedef enum technician_data_flag_e {
   TECHNICIAN_READ_FROM_DATABASE
 } TECHNICIAN_DATA_FLAG;
 
-#define DB_SET_TOUCHED(x) (1<<x)
 _Static_assert(true == DB_SET_TOUCHED(0), "true value must be equal 1");
 typedef enum technician_data_touched_e {
   TECHNICIAN_TOUCHED = true,
@@ -180,6 +182,18 @@ typedef enum technician_data_touched_e {
   TECHNICIAN_EMAIL_TOUCHED = DB_SET_TOUCHED(4),
   TECHNICIAN_PHONE_NUMBER_TOUCHED = DB_SET_TOUCHED(5)
 } TECHNICIAN_DATA_TOUCHED;
+
+typedef enum client_data_touched_e {
+  CLIENT_TOUCHED = true,
+  CLIENT_TECHNICIAN_ID_COMMAND_TOUCHED = DB_SET_TOUCHED(1),
+  CLIENT_VERSION_TOUCHED = DB_SET_TOUCHED(2),
+  CLIENT_CPF_COMMAND_TOUCHED = DB_SET_TOUCHED(3),
+  CLIENT_NAME_COMMAND_TOUCHED = DB_SET_TOUCHED(4),
+  CLIENT_ADDRESS_COMMAND_TOUCHED = DB_SET_TOUCHED(5),
+  CLIENT_DISTRICT_CITY_COMMAND_TOUCHED = DB_SET_TOUCHED(6),
+  CLIENT_EMAIL_COMMAND_TOUCHED = DB_SET_TOUCHED(7),
+  CLIENT_PHONE_NUMBER_COMMAND_TOUCHED = DB_SET_TOUCHED(8)
+} CLIENT_DATA_TOUCHED;
 
 typedef struct technician_data_t{
   int32_t touched;

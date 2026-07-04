@@ -43,6 +43,7 @@ int technician_delete(TECHNICIAN_DATA *technician_data)
         case TECHNICIAN_DATA_UPDATE:
             break;
         default:
+            technician_data_clear(technician_data);
             return 0;
     }
 
@@ -53,9 +54,9 @@ int technician_delete(TECHNICIAN_DATA *technician_data)
 
 int client_add(CLIENT_DATA *client_data, ...)
 {
-    if (client_data) {
-        CLIENT_DATA_FLAG flag = client_data->flag;
-
+    CLIENT_DATA_MANIPULATE_HELPER(
+        client_add,
+        ADD, 
         switch (flag) {
             case CLIENT_DATA_DELETE:
             case CLIENT_DATA_READ_FROM_DATABASE:
@@ -65,60 +66,38 @@ int client_add(CLIENT_DATA *client_data, ...)
                 flag = CLIENT_DATA_NEW;
             default:
         }
+    )
+}
 
-        va_list args;
-
-        va_start(args, client_data);
-        DB_ADD_ENUM_COMMAND command;
-        void *p;
-        int err = 0;
-        while ((command = (DB_ADD_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) {
-            p = (void *)va_arg(args, void *);
-            switch (command) {
-                case DB_CLIENT_ADD_TECHNICIAN_ID_COMMAND:
-                    size_t id_as_size_t = (size_t)((intptr_t)p);
-                    if (id_as_size_t <= INT32_MAX) {
-                        client_data->technician_id = (int32_t)id_as_size_t;
-                        break;
-                    }
-                    err = DB_CLIENT_ADD_TECHNICIAN_ID_LIMIT_REACHED;
-                    goto client_add_exit1;
-                case DB_CLIENT_ADD_CPF_COMMAND:
-                    DB_COPY_STR_FROM(client_data->cpf, (char *)p)
-                    break;
-                case DB_CLIENT_ADD_NAME_COMMAND:
-                    DB_COPY_STR_FROM(client_data->name, (char *)p)
-                    break;
-                case DB_CLIENT_ADD_ADDRESS_COMMAND:
-                    DB_COPY_STR_FROM(client_data->address, (char *)p)
-                    break;
-                case DB_CLIENT_ADD_DISTRICT_CITY_COMMAND:
-                    DB_COPY_STR_FROM(client_data->district_city, (char *)p)
-                    break;
-                case DB_CLIENT_EMAIL_COMMAND:
-                    DB_COPY_STR_FROM(client_data->email, (char *)p)
-                    break;
-                case DB_CLIENT_PHONE_NUMBER_COMMAND:
-                    DB_COPY_STR_FROM(client_data->phone_number, (char *)p)
-                    break;
-                default:
-                    err = DB_CLIENT_ADD_INVALID_COMMAND;
-                    goto client_add_exit1;
-            }
+int client_update(CLIENT_DATA *client_data, ...)
+{
+    CLIENT_DATA_MANIPULATE_HELPER(
+        client_update,
+        UPDATE, 
+        switch (flag) {
+            case CLIENT_DATA_READ_FROM_DATABASE:
+            case CLIENT_DATA_UPDATE:
+                flag = CLIENT_DATA_UPDATE;
+            default:
+                return DB_CLIENT_DATA_UNABLE_TO_UPDATE;
         }
+    )
+}
 
-client_add_exit1:
-        va_end(args);
-
-        if (err == 0) {
-            client_data->touched = true;
-            client_data->flag = flag;
-        }
-
-        return 0;
+int client_delete(CLIENT_DATA *client_data)
+{
+    switch (client_data->flag) {
+        case CLIENT_DATA_READ_FROM_DATABASE:
+        case CLIENT_DATA_UPDATE:
+            break;
+        default:
+            client_data_clear(client_data);
+            return 0;
     }
 
-    return DB_CLIENT_ADD_INVALID;
+    client_data->flag = TECHNICIAN_DATA_DELETE;
+
+    return 0;
 }
 
 int repair_add(REPAIR *repair, ...)

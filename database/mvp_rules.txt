@@ -18,6 +18,11 @@ sudo -u postgres psql -c "SHOW data_directory;"
 ALTER TABLE technician_data 
 ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
 
+ALTER TABLE client_data ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE repair_request ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE service_request ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE app_config ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
+
 -- create database
 create database solda_mvp;
 
@@ -50,6 +55,7 @@ FROM generate_series(1, 100) AS s(id);
 create table client_data (
     id              SERIAL PRIMARY KEY,
     technician_id   INTEGER REFERENCES NOT NULL technician_data(id), -- not null
+    version         INTEGER NOT NULL DEFAULT 0,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     cpf             VARCHAR(20) NOT NULL UNIQUE CONSTRAINT chk_client_cpf CHECK (char_length(cpf) = 14), -- length = 20 (6 more bytes for RF updates)
     name            VARCHAR(100) NOT NULL CONSTRAINT chk_client_name  CHECK (char_length(name) > 2),
@@ -323,4 +329,15 @@ WHERE phone_number IS NULL;
 
 -- 3 — só agora trava como obrigatório
 ALTER TABLE technician_data ALTER COLUMN phone_number SET NOT NULL;
+
+
+
+TODO LIST
+
+tests/
+├── test_manipulator.c    → ADD, UPDATE, DELETE, flags
+├── test_dirty_tracking.c → bitmask by field
+├── test_validators.c     → CPF, email, phone
+├── test_limits.c         → realloc, MAX_LIMIT
+└── test_service.c        → Postgres integration (libpq)
 

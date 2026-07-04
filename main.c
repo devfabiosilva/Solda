@@ -23,9 +23,9 @@
     printf("\ntechnician_data index %d and pointer %p", (int)technician_index, technician_data);
 
     err = TECHNICIAN_EXECUTE_ADD(technician_data,
-        TECHNICIAN_NAME("name ABC"),
-        TECHNICIAN_EMAIL("email@email.com"),
-        TECHNICIAN_PHONE_NUMBER("12345-67890"),
+        TECHNICIAN_ADD_NAME("name ABC"),
+        TECHNICIAN_ADD_EMAIL("email@email.com"),
+        TECHNICIAN_ADD_PHONE_NUMBER("12345-67890"),
         TECHNICIAN_ADD_RULES(IS_ROOT_ADMIN_SUPREME)
     )
 
@@ -47,13 +47,13 @@
 
     err = CLIENT_EXECUTE_ADD(
             client_data,
-            CLIENT_TECHNICIAN_ID(technician_index),
-            CLIENT_CPF("111.111.111.00"),
-            CLIENT_NAME("Fernanda Silva"),
-            CLIENT_ADDRESS("Client Address"),
-            CLIENT_DISTRICT_CITY("Rua XYZ Quadra A"),
-            CLIENT_EMAIL("fernanda@email.com"),
-            CLIENT_PHONE_NUMBER("(21) 91234-6789")
+            CLIENT_ADD_TECHNICIAN_ID(technician_index),
+            CLIENT_ADD_CPF("111.111.111.00"),
+            CLIENT_ADD_NAME("Fernanda Silva"),
+            CLIENT_ADD_ADDRESS("Client Address"),
+            CLIENT_ADD_DISTRICT_CITY("Rua XYZ Quadra A"),
+            CLIENT_ADD_EMAIL("fernanda@email.com"),
+            CLIENT_ADD_PHONE_NUMBER("(21) 91234-6789")
         )
 
     if (err) goto main_exit;
