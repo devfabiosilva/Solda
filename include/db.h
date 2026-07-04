@@ -27,7 +27,7 @@ typedef enum service_request_flag_e {
 typedef struct service_request_t {
   uint32_t id;                                     // PK
   uint32_t repair_request_id;                      // FK for request
-  bool touched;
+  int32_t touched;
   time_t created_at;                               // Created service request
   SERVICE_REQUEST_FLAG flag;                       // Only on edit/update mode. This field will NOT record at database
   int32_t quantity;                                // Quantity > 0
@@ -87,7 +87,7 @@ typedef enum repair_request_flag_e {
 typedef struct repair_request_t {
   int32_t id;                                         // PK repair request
   int32_t client_id;                                  // FK For client id
-  bool touched;                                       // is touched?
+  int32_t touched;                                    // is touched?
   time_t created_at;                                  // Created request timestamp for Solda client user
   REPAIR_REQUEST_STATUS status;                       // Request status
   bool is_bugdet;                                     // Binary: Bugdet or Work order
@@ -167,12 +167,22 @@ typedef enum technician_data_flag_e {
   TECHNICIAN_DATA_NEW,
   TECHNICIAN_DATA_UPDATE,
   TECHNICIAN_DATA_DELETE,
-  TECHNICIAN_DATA_NEW_AND_DELETED_BEFORE_SAVE,
   TECHNICIAN_READ_FROM_DATABASE
 } TECHNICIAN_DATA_FLAG;
 
+#define DB_SET_TOUCHED(x) (1<<x)
+_Static_assert(true == DB_SET_TOUCHED(0), "true value must be equal 1");
+typedef enum technician_data_touched_e {
+  TECHNICIAN_TOUCHED = true,
+  TECHNICIAN_VERSION_TOUCHED = DB_SET_TOUCHED(1),
+  TECHNICIAN_RULES_TOUCHED = DB_SET_TOUCHED(2),
+  TECHNICIAN_NAME_TOUCHED = DB_SET_TOUCHED(3),
+  TECHNICIAN_EMAIL_TOUCHED = DB_SET_TOUCHED(4),
+  TECHNICIAN_PHONE_NUMBER_TOUCHED = DB_SET_TOUCHED(5)
+} TECHNICIAN_DATA_TOUCHED;
+
 typedef struct technician_data_t{
-  bool touched;
+  int32_t touched;
   int32_t id;
   int32_t version;
   TECHNICIAN_RULES rules;

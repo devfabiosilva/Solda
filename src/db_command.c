@@ -6,56 +6,49 @@
 
 int technician_add(TECHNICIAN_DATA *technician_data, ...)
 {
-    if (technician_data) {
-        TECHNICIAN_DATA_FLAG flag = technician_data->flag;
+    TECHNICIAN_MANIPULATE_HELPER(
+        technician_add,
+        ADD,
         switch (flag) {
             case TECHNICIAN_DATA_DELETE:
             case TECHNICIAN_READ_FROM_DATABASE:
                 return DB_TECHNICIAN_ADD_UNABLE_TO_APPEND_DATA;
             case TECHNICIAN_DATA_INIT:
-            case TECHNICIAN_DATA_NEW_AND_DELETED_BEFORE_SAVE:
                 flag = TECHNICIAN_DATA_NEW;
             default:
         }
+    )
+}
 
-        va_list args;
-
-        va_start(args, technician_data);
-        DB_ADD_ENUM_COMMAND command;
-        void *p;
-        int err = 0;
-        while ((command = (DB_ADD_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) {
-            p = (void *)va_arg(args, void *);
-            switch (command) {
-                case DB_TECHNICIAN_ADD_NAME_COMMAND:
-                    DB_COPY_STR_FROM(technician_data->name, (char *)p);
-                    break;
-                case DB_TECHNICIAN_ADD_EMAIL_COMMAND:
-                    DB_COPY_STR_FROM(technician_data->email, (char *)p)
-                    break;
-                case DB_TECHNICIAN_ADD_PHONE_NUMBER_COMMAND:
-                    DB_COPY_STR_FROM(technician_data->phone_number, (char *)p)
-                    break;
-                case DB_TECHNICIAN_ADD_RULES:
-                    technician_data->rules = (TECHNICIAN_RULES)((intptr_t)p);
-                    break;
-                default:
-                    err = DB_TECHNICIAN_ADD_INVALID_COMMAND;
-                    goto technician_add_exit1;
-            }
+int technician_update(TECHNICIAN_DATA *technician_data, ...)
+{
+    TECHNICIAN_MANIPULATE_HELPER(
+        technician_update,
+        UPDATE,
+        switch (flag) {
+            case TECHNICIAN_READ_FROM_DATABASE:
+            case TECHNICIAN_DATA_UPDATE:
+                flag = TECHNICIAN_DATA_UPDATE;
+                break;
+            default:
+                return DB_TECHNICIAN_DATA_UNABLE_TO_UPDATE;
         }
-technician_add_exit1:
-        va_end(args);
+    )
+}
 
-        if (err == 0) {
-            technician_data->touched = true;
-            technician_data->flag = flag;
-        }
-
-        return err;
+int technician_delete(TECHNICIAN_DATA *technician_data)
+{
+    switch (technician_data->flag) {
+        case TECHNICIAN_READ_FROM_DATABASE:
+        case TECHNICIAN_DATA_UPDATE:
+            break;
+        default:
+            return 0;
     }
 
-    return DB_TECHNICIAN_ADD_INVALID;
+    technician_data->flag = TECHNICIAN_DATA_DELETE;
+
+    return 0;
 }
 
 int client_add(CLIENT_DATA *client_data, ...)
@@ -237,7 +230,7 @@ int service_add(SERVICE *service, ...)
         while ((command = (DB_ADD_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) {
             p = (void *)va_arg(args, void *);
             switch (command) {
-                case DB_SERVICE_REPAIR_REQUEST_ID:
+                case DB_SERVICE_ADD_REPAIR_REQUEST_ID:
                     size_t id_as_size_t = (size_t)((intptr_t)p);
                     if (id_as_size_t <= INT32_MAX) {
                         service->repair_request_id = (int32_t)id_as_size_t;
@@ -245,7 +238,7 @@ int service_add(SERVICE *service, ...)
                     }
                     err = DB_SERVICE_ADD_REPAIR_REQUEST_ID_LIMIT_REACHED;
                     goto service_add_exit1;
-                case DB_SERVICE_QUANTITY:
+                case DB_SERVICE_ADD_QUANTITY:
                     int32_t quantity = (int32_t)((uintptr_t)p);
                     if (quantity > 0) {
                         service->quantity = quantity;
@@ -253,13 +246,13 @@ int service_add(SERVICE *service, ...)
                     }
                     err = DB_SERVICE_ADD_QUANTITY_INVALID;
                     goto service_add_exit1;
-                case DB_SERVICE_MONETARY_TYPE:
+                case DB_SERVICE_ADD_MONETARY_TYPE:
                     service->monetary_type = (MONETARY_TYPE)((uintptr_t)p);
                     break;
-                case DB_SERVICE_UNITY_PRICE:
+                case DB_SERVICE_ADD_UNITY_PRICE:
                     service->unity_price = (int64_t)((uintptr_t)p);
                     break;
-                case DB_SERVICE_DESCRIPTION:
+                case DB_SERVICE_ADD_DESCRIPTION:
                     DB_COPY_STR_FROM(service->description, (char *)p)
                     break;
                 default:
@@ -280,19 +273,3 @@ service_add_exit1:
     return DB_SERVICE_INVALID;
 }
 
-int technician_update(TECHNICIAN_DATA *technician_data, ...)
-{
-    if (technician_data) {
-        switch (technician_data->flag) {
-            case TECHNICIAN_READ_FROM_DATABASE:
-            case TECHNICIAN_DATA_UPDATE:
-                break;
-            default:
-                return DB_TECHNICIAN_DATA_UNABLE_TO_UPDATE;
-        }
-        // TODO IMPLEMENT UPDATE
-        return 0;
-    }
-
-    return DB_TECHNICIAN_DATA_UPDATE_INVALID;
-}
