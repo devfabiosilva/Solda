@@ -4,12 +4,18 @@
 #include <db_command.h>
 #include <time.h>
 
+int test_add_manipulation();
+
 int main(int argc, char **argv)
 {
   (void)argc;
   (void)argv;
 
-  // TODO add tests
+  return test_add_manipulation();
+}
+
+int test_add_manipulation()
+{
    TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
     int err = technician_data_requests_init(&technician_requests);
     if (err) {
@@ -23,7 +29,7 @@ int main(int argc, char **argv)
     if ((err = technician_acquire_technician_data_from_array(
         &technician_index, &technician_data,
         technician_requests
-    ))) goto main_exit;
+    ))) goto test_add_manipulation_exit;
 
     printf("\ntechnician_data index %d and pointer %p", (int)technician_index, technician_data);
 
@@ -34,7 +40,7 @@ int main(int argc, char **argv)
         TECHNICIAN_ADD_RULES(IS_ROOT_ADMIN_SUPREME)
     )
 
-    if (err) goto main_exit;
+    if (err) goto test_add_manipulation_exit;
 
     size_t client_data_index;
     CLIENT_DATA *client_data = NULL;
@@ -46,7 +52,7 @@ int main(int argc, char **argv)
         &client_data,
         technician_index,
         technician_requests
-    ))) goto main_exit;
+    ))) goto test_add_manipulation_exit;
 
     printf("\nclient_data index %d and pointer %p", (int)client_data_index, client_data);
 
@@ -61,7 +67,7 @@ int main(int argc, char **argv)
             CLIENT_ADD_PHONE_NUMBER("(21) 91234-6789")
         )
 
-    if (err) goto main_exit;
+    if (err) goto test_add_manipulation_exit;
 
     printf("\nValue of %p of %s\n", client_data, client_data->name);
 
@@ -73,7 +79,7 @@ int main(int argc, char **argv)
         client_data_index,
         technician_index,
         technician_requests
-    ))) goto main_exit;
+    ))) goto test_add_manipulation_exit;
 
     printf("\nrepair index %d and pointer %p", (int)repair_request_index, repair);
 
@@ -94,7 +100,7 @@ int main(int argc, char **argv)
         REPAIR_ADD_WARRANTY(time(NULL))
     )
 
-    if (err) goto main_exit;
+    if (err) goto test_add_manipulation_exit;
 
     printf("\nValue of %p of %s\n", repair, repair->claimed_defect);
     size_t service_request_index;
@@ -103,7 +109,7 @@ int main(int argc, char **argv)
         &service_request_index, &service,
         client_data_index, technician_index, repair_request_index,
         technician_requests
-    ))) goto main_exit;
+    ))) goto test_add_manipulation_exit;
 
     printf("\nservice index %d and pointer %p", (int)service_request_index, service);
 
@@ -119,10 +125,11 @@ int main(int argc, char **argv)
     if (err == 0)
         printf("\nValue of %p of %s\n", service, service->description);
 
-main_exit:
+test_add_manipulation_exit:
     printf("\ntechnician_requests pointer %p\n", technician_requests);
-    //technician_data_requests_free(&technician_requests);
+    technician_data_requests_free(&technician_requests);
     printf("\ntechnician_requests pointer %p\n", technician_requests);
     printf("\n status %d\n", err);
     return err;
 }
+

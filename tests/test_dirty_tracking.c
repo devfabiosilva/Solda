@@ -3,6 +3,8 @@
 int main(int argc, char **argv)
 {
   // TODO add tests
+  (void)argc;
+  (void)argv;
   printf("\nTODO implement test_dirty_tracking ...");
   return 0;
 }

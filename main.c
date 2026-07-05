@@ -3,8 +3,8 @@
  #include <db_command.h>
  #include <time.h>
 
- int main(int argc, char **argv)
- {
+int test()
+{
     TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
     int err = technician_data_requests_init(&technician_requests);
     if (err) {
@@ -116,8 +116,13 @@
 
 main_exit:
     printf("\ntechnician_requests pointer %p\n", technician_requests);
-    //technician_data_requests_free(&technician_requests);
+    technician_data_requests_free(&technician_requests);
     printf("\ntechnician_requests pointer %p\n", technician_requests);
     printf("\n status %d\n", err);
     return err;
+}
+
+ int main(int argc, char **argv)
+ {
+   return test();
  }
