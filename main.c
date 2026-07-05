@@ -116,7 +116,7 @@
 
 main_exit:
     printf("\ntechnician_requests pointer %p\n", technician_requests);
-    technician_data_requests_free(&technician_requests);
+    //technician_data_requests_free(&technician_requests);
     printf("\ntechnician_requests pointer %p\n", technician_requests);
     printf("\n status %d\n", err);
     return err;

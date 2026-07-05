@@ -16,7 +16,7 @@
         va_list args; \
 \
         va_start(args, technician_data); \
-        DB_ADD_ENUM_COMMAND command; \
+        DB_##action##_ENUM_COMMAND command; \
         void *p; \
         int err = 0; \
         while ((command = (DB_##action##_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) { \

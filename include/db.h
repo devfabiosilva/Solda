@@ -225,7 +225,7 @@ void repair_request_clear(REPAIR *);
 void repair_requests_clear(REPAIR_REQUESTS *);
 
 // END REFACTORING
-
+void client_data_clear(CLIENT_DATA *);
 // BEGIN TECHNICIAN
 int technician_data_requests_init(TECHNICIAN_DATA_REQUESTS **);
 void technician_data_requests_free(TECHNICIAN_DATA_REQUESTS **);

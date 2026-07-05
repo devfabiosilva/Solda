@@ -78,6 +78,7 @@ int client_update(CLIENT_DATA *client_data, ...)
             case CLIENT_DATA_READ_FROM_DATABASE:
             case CLIENT_DATA_UPDATE:
                 flag = CLIENT_DATA_UPDATE;
+                break;
             default:
                 return DB_CLIENT_DATA_UNABLE_TO_UPDATE;
         }
@@ -95,7 +96,7 @@ int client_delete(CLIENT_DATA *client_data)
             return 0;
     }
 
-    client_data->flag = TECHNICIAN_DATA_DELETE;
+    client_data->flag = CLIENT_DATA_DELETE;
 
     return 0;
 }

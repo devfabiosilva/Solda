@@ -8,6 +8,7 @@ add_compile_options(
     -Wall
     -Wextra
     -g
+    -O0
 )
 
 # ASAN optional -DASAN=ON
@@ -23,6 +24,8 @@ include_directories(include)
 # core — static library
 add_library(solda_core STATIC
     src/db.c
+    src/db_command.c
+    src/db_memory.c
 )
 
 # tests
