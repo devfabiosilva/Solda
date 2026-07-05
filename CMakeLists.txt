@@ -1,21 +1,33 @@
 cmake_minimum_required(VERSION 3.20)
 project(Solda)
-
 set(CMAKE_C_STANDARD 11)
 
+#cmake -DCMAKE_BUILD_TYPE=Debug -DASAN=ON -DTEST=ON ..
 # compilation flags
 add_compile_options(
     -Wall
     -Wextra
-    -g
-    -O0
 )
 
 # ASAN optional -DASAN=ON
 option(ASAN "Enable AddressSanitizer" ON)
-if(ASAN)
+if(ASAN AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-fsanitize=address,leak)
     add_link_options(-fsanitize=address,leak)
+    message(STATUS "ASAN: enabled")
+elseif(ASAN AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(FATAL_ERROR 
+        "ASAN could not be used in Release mode! "
+        "Use -DCMAKE_BUILD_TYPE=Debug"
+    )
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_options(-O3 -march=native)
+    message(STATUS "Build: Release (-O3)")
+else()
+    add_compile_options(-O0 -g -DDB_DEBUG)
+    message(STATUS "Build: Debug (-O0)")
 endif()
 
 # include path
@@ -28,7 +40,16 @@ add_library(solda_core STATIC
     src/db_memory.c
 )
 
-# tests
-enable_testing()
-add_subdirectory(tests)
+# TEST optional -DTEST=ON
+option(TEST "Enable test" ON)
+if(TEST)
+    add_compile_options(-DDB_TEST)
 
+    # test only compiling
+    add_library(solda_asserts STATIC
+        src/tests/asserts.c
+    )
+
+    enable_testing()
+    add_subdirectory(tests)
+endif()

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <db_command.h>
 #include <time.h>
+#include <tests/asserts.h>
 
 int test_add_manipulation();
 
@@ -16,6 +17,7 @@ int main(int argc, char **argv)
 
 int test_add_manipulation()
 {
+    TITLE_MSG("Begin test_add_manipulation ...")
    TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
     int err = technician_data_requests_init(&technician_requests);
     if (err) {
@@ -130,6 +132,7 @@ test_add_manipulation_exit:
     technician_data_requests_free(&technician_requests);
     printf("\ntechnician_requests pointer %p\n", technician_requests);
     printf("\n status %d\n", err);
+    TITLE_MSG("End test_add_manipulation ...")
     return err;
 }
 
