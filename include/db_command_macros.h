@@ -4,6 +4,8 @@
 #define DB_COPY_STR_FROM(dst, src) \
     if (src) {\
         strncpy(dst, src, sizeof(dst)-1); \
+    } else { \
+        dst[0] = 0; \
     }
 
 #define TECHNICIAN_MANIPULATE_HELPER(func, action, text) \

@@ -341,3 +341,68 @@ tests/
 ├── test_limits.c         → realloc, MAX_LIMIT
 └── test_service.c        → Postgres integration (libpq)
 
+
+XML
+-- xmlelement — equivalente ao json_build_object
+SELECT xmlelement(
+    name tecnico,
+    xmlattributes(t.id AS id),
+    xmlelement(name nome, t.name),
+    xmlelement(name email, t.email),
+    xmlagg(
+        xmlelement(
+            name cliente,
+            xmlattributes(c.id AS id),
+            xmlelement(name nome, c.name),
+            xmlelement(name cpf, c.cpf),
+            xmlelement(name email, c.email)
+        )
+    )
+)
+FROM technician_data t
+JOIN client_data c ON c.technician_id = t.id
+GROUP BY t.id, t.name
+LIMIT 3;
+
+
+SELECT json_build_object(
+    'id',        t.id,
+    'tecnico',   t.name,
+    'clientes',  json_agg(json_build_object(
+        'nome', c.name,
+        'cpf',  c.cpf,
+        'email', c.email
+    ))
+)
+FROM technician_data t
+JOIN client_data c ON c.technician_id = t.id
+GROUP BY t.id, t.name
+LIMIT 3;
+
+
+SELECT json_agg(t) FROM (
+    SELECT t.name AS tecnico, c.name AS cliente, c.cpf
+    FROM technician_data t
+    JOIN client_data c ON c.technician_id = t.id
+    LIMIT 3
+) t;
+
+SELECT row_to_json(t) FROM (
+    SELECT t.name AS tecnico, c.name AS cliente, c.cpf
+    FROM technician_data t
+    JOIN client_data c ON c.technician_id = t.id
+    LIMIT 3
+) t;
+
+COPY (
+    SELECT 
+        t.name AS tecnico,
+        c.name AS cliente,
+        c.cpf,
+        c.email
+    FROM technician_data t
+    JOIN client_data c ON c.technician_id = t.id
+    LIMIT 10
+) TO '/tmp/solda_test.csv'
+WITH (FORMAT csv, HEADER true, DELIMITER ',');
+

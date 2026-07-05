@@ -90,6 +90,7 @@ typedef struct repair_request_t {
   int32_t id;                                         // PK repair request
   int32_t client_id;                                  // FK For client id
   int32_t touched;                                    // is touched?
+  int32_t version;
   time_t created_at;                                  // Created request timestamp for Solda client user
   REPAIR_REQUEST_STATUS status;                       // Request status
   bool is_bugdet;                                     // Binary: Bugdet or Work order
@@ -107,6 +108,25 @@ typedef struct repair_request_t {
   time_t warranty;                                    // Total day from delivery date
   SERVICE_REQUESTS optional_service_requests;         // ARRAY NULLABLE List of service requests
 } REPAIR;
+
+typedef enum repair_touched_e {
+  REPAIR_COMMAND_TOUCHED = true,
+  REPAIR_CLIENT_ID_COMMAND_TOUCHED = DB_SET_TOUCHED(1),
+  REPAIR_VERSION_TOUCHED = DB_SET_TOUCHED(2),
+  REPAIR_STATUS_COMMAND_TOUCHED = DB_SET_TOUCHED(3),
+  REPAIR_IS_BUDGET_COMMAND_TOUCHED = DB_SET_TOUCHED(4),
+  REPAIR_DEVICE_PROBLEM_COMMAND_TOUCHED = DB_SET_TOUCHED(5),
+  REPAIR_BRAND_MODEL_COMMAND_TOUCHED = DB_SET_TOUCHED(6),
+  REPAIR_SERIAL_MODEL_COMMAND_TOUCHED = DB_SET_TOUCHED(7),
+  REPAIR_CLAIMED_DEFECT_COMMAND_TOUCHED = DB_SET_TOUCHED(8),
+  REPAIR_OBSERVATIONS_COMMAND_TOUCHED = DB_SET_TOUCHED(9),
+  REPAIR_MONETARY_TYPE_COMMAND_TOUCHED = DB_SET_TOUCHED(10),
+  REPAIR_EXPECTED_BUDGET_DATE_COMMAND_TOUCHED = DB_SET_TOUCHED(11),
+  REPAIR_EXPECTED_DELIVERY_DATE_DATE_COMMAND_TOUCHED = DB_SET_TOUCHED(12),
+  REPAIR_LABOR_BUDEGET_DATE_COMMAND_TOUCHED = DB_SET_TOUCHED(13),
+  REPAIR_DELIVERY_DATE_COMMAND_TOUCHED = DB_SET_TOUCHED(14),
+  REPAIR_WARRANTY_DATE_COMMAND_TOUCHED = DB_SET_TOUCHED(15)
+} REPAIR_TOUCHED;
 
 typedef struct repair_requests_t {
   size_t n;                                        // Actual array size

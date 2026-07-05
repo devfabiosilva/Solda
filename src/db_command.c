@@ -116,6 +116,7 @@ int repair_add(REPAIR *repair, ...)
             default:
         }
 
+        REPAIR_TOUCHED touched = 0;
         va_list args;
 
         va_start(args, repair);
@@ -129,45 +130,58 @@ int repair_add(REPAIR *repair, ...)
                     size_t id_as_size_t = (size_t)((intptr_t)p);
                     if (id_as_size_t <= INT32_MAX) {
                         repair->client_id = (int32_t)id_as_size_t;
+                        touched |= REPAIR_CLIENT_ID_COMMAND_TOUCHED;
                         break;
                     }
                     err = DB_REPAIR_ADD_CLIENT_ID_LIMIT_REACHED;
                     goto repair_add_exit1;
                 case DB_REPAIR_ADD_IS_BUDGET:
                     repair->is_bugdet = (bool)((intptr_t)p);
+                    touched |= REPAIR_IS_BUDGET_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_DEVICE_PROBLEM:
                     repair->device_problem = (ELECTRONIC_DEVICE_PROBLEM)((uintptr_t)p);
+                    touched |= REPAIR_DEVICE_PROBLEM_COMMAND_TOUCHED; 
                     break;
                 case DB_REPAIR_ADD_BRAND_MODEL:
                     DB_COPY_STR_FROM(repair->brand_model, (char *)p)
+                    touched |= REPAIR_BRAND_MODEL_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_SERIAL_NUMBER:
                     DB_COPY_STR_FROM(repair->serial_number, (char *)p)
+                    touched |= REPAIR_SERIAL_MODEL_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_CLAIMED_DEFECT:
                     DB_COPY_STR_FROM(repair->claimed_defect, (char *)p)
+                    touched |= REPAIR_CLAIMED_DEFECT_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_OBSERVATION:
                     DB_COPY_STR_FROM(repair->observations, (char *)p)
+                    touched |= REPAIR_OBSERVATIONS_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_MONETARY_TYPE:
                     repair->monetary_type = (MONETARY_TYPE)((uintptr_t)p);
+                    touched |= REPAIR_MONETARY_TYPE_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_EXPECTED_BUDGET_DATE:
                     repair->expected_budget_date = (time_t)((uintptr_t)p);
+                    touched |= REPAIR_EXPECTED_BUDGET_DATE_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_EXPECTED_DELIVERY_DATE:
                     repair->expected_delivery_date = (time_t)((uintptr_t)p);
+                    touched |= REPAIR_EXPECTED_DELIVERY_DATE_DATE_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_LABOR_BUDGET:
                     repair->labor_bugdet = (int64_t)((uintptr_t)p);
+                    touched |= REPAIR_LABOR_BUDEGET_DATE_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_DELIVERY_DATE:
                     repair->delivery_date = (time_t)((uintptr_t)p);
+                    touched |= REPAIR_DELIVERY_DATE_COMMAND_TOUCHED;
                     break;
                 case DB_REPAIR_ADD_WARRANTY:
                     repair->warranty = (time_t)((uintptr_t)p);
+                    touched |= REPAIR_WARRANTY_DATE_COMMAND_TOUCHED;
                     break;
                 default:
                     err = DB_REPAIR_INVALID_COMMAND;
@@ -179,7 +193,7 @@ repair_add_exit1:
         va_end(args);
 
         if (err == 0) {
-            repair->touched = true;
+            repair->touched = touched;
             repair->flag = flag;
         }
         return 0;
