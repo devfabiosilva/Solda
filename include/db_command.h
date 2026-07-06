@@ -88,7 +88,7 @@ int technician_update(TECHNICIAN_DATA *, ...);
   #define TECHNICIAN_UPDATE_RULES(v) DB_TECHNICIAN_UPDATE_RULES, v
 
 
-int technician_delete(TECHNICIAN_DATA *);
+void technician_delete(TECHNICIAN_DATA *);
 
 int client_add(CLIENT_DATA *, ...);
 
@@ -145,5 +145,8 @@ int service_add(SERVICE *, ...);
 #define SERVICE_MONETARY_TYPE(v) DB_SERVICE_ADD_MONETARY_TYPE, v
 #define SERVICE_UNITY_PRICE(v) DB_SERVICE_ADD_UNITY_PRICE, v
 #define SERVICE_DESCRIPTION(v) DB_SERVICE_ADD_DESCRIPTION, v
+
+int repair_update(REPAIR *, ...);
+void repair_delete(REPAIR *);
 
 #endif

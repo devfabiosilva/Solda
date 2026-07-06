@@ -125,5 +125,96 @@ func##_exit1: \
 \
     return DB_CLIENT_##action##_INVALID;
 
+
+#define REPAIR_MANIPULATE_HELPER(func, action, text) \
+    if (repair) { \
+        REPAIR_REQUEST_FLAG flag = repair->flag; \
+\
+        text \
+\
+        REPAIR_TOUCHED touched = 0; \
+        va_list args; \
+\
+        va_start(args, repair); \
+        DB_##action##_ENUM_COMMAND command; \
+        void *p; \
+        int err = 0; \
+        while ((command = (DB_##action##_ENUM_COMMAND)va_arg(args, DB_##action##_ENUM_COMMAND))) { \
+            p = (void *)va_arg(args, void *); \
+            switch (command) { \
+                case DB_REPAIR_##action##_CLIENT_ID: \
+                    size_t id_as_size_t = (size_t)((intptr_t)p); \
+                    if (id_as_size_t <= INT32_MAX) { \
+                        repair->client_id = (int32_t)id_as_size_t; \
+                        touched |= REPAIR_CLIENT_ID_COMMAND_TOUCHED; \
+                        break; \
+                    } \
+                    err = DB_REPAIR_##action##_CLIENT_ID_LIMIT_REACHED; \
+                    goto func##_exit1; \
+                case DB_REPAIR_##action##_IS_BUDGET: \
+                    repair->is_bugdet = (bool)((intptr_t)p); \
+                    touched |= REPAIR_IS_BUDGET_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_DEVICE_PROBLEM: \
+                    repair->device_problem = (ELECTRONIC_DEVICE_PROBLEM)((uintptr_t)p); \
+                    touched |= REPAIR_DEVICE_PROBLEM_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_BRAND_MODEL: \
+                    DB_COPY_STR_FROM(repair->brand_model, (char *)p) \
+                    touched |= REPAIR_BRAND_MODEL_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_SERIAL_NUMBER: \
+                    DB_COPY_STR_FROM(repair->serial_number, (char *)p) \
+                    touched |= REPAIR_SERIAL_MODEL_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_CLAIMED_DEFECT: \
+                    DB_COPY_STR_FROM(repair->claimed_defect, (char *)p) \
+                    touched |= REPAIR_CLAIMED_DEFECT_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_OBSERVATION: \
+                    DB_COPY_STR_FROM(repair->observations, (char *)p) \
+                    touched |= REPAIR_OBSERVATIONS_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_MONETARY_TYPE: \
+                    repair->monetary_type = (MONETARY_TYPE)((uintptr_t)p); \
+                    touched |= REPAIR_MONETARY_TYPE_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_EXPECTED_BUDGET_DATE: \
+                    repair->expected_budget_date = (time_t)((uintptr_t)p); \
+                    touched |= REPAIR_EXPECTED_BUDGET_DATE_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_EXPECTED_DELIVERY_DATE: \
+                    repair->expected_delivery_date = (time_t)((uintptr_t)p); \
+                    touched |= REPAIR_EXPECTED_DELIVERY_DATE_DATE_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_LABOR_BUDGET: \
+                    repair->labor_bugdet = (int64_t)((uintptr_t)p); \
+                    touched |= REPAIR_LABOR_BUDEGET_DATE_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_DELIVERY_DATE: \
+                    repair->delivery_date = (time_t)((uintptr_t)p); \
+                    touched |= REPAIR_DELIVERY_DATE_COMMAND_TOUCHED; \
+                    break; \
+                case DB_REPAIR_##action##_WARRANTY: \
+                    repair->warranty = (time_t)((uintptr_t)p); \
+                    touched |= REPAIR_WARRANTY_DATE_COMMAND_TOUCHED; \
+                    break; \
+                default: \
+                    err = DB_REPAIR_INVALID_COMMAND; \
+                    goto func##_exit1; \
+            } \
+        } \
+\
+func##_exit1: \
+        va_end(args); \
+\
+        if (err == 0) { \
+            repair->touched = touched; \
+            repair->flag = flag; \
+        } \
+        return 0; \
+    } \
+    return DB_REPAIR_##action##_INVALID;
+
 #endif
 

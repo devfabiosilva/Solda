@@ -36,7 +36,7 @@ int technician_update(TECHNICIAN_DATA *technician_data, ...)
     )
 }
 
-int technician_delete(TECHNICIAN_DATA *technician_data)
+void technician_delete(TECHNICIAN_DATA *technician_data)
 {
     switch (technician_data->flag) {
         case TECHNICIAN_READ_FROM_DATABASE:
@@ -44,12 +44,10 @@ int technician_delete(TECHNICIAN_DATA *technician_data)
             break;
         default:
             technician_data_clear(technician_data);
-            return 0;
+            return;
     }
 
     technician_data->flag = TECHNICIAN_DATA_DELETE;
-
-    return 0;
 }
 
 int client_add(CLIENT_DATA *client_data, ...)
@@ -85,7 +83,7 @@ int client_update(CLIENT_DATA *client_data, ...)
     )
 }
 
-int client_delete(CLIENT_DATA *client_data)
+void client_delete(CLIENT_DATA *client_data)
 {
     switch (client_data->flag) {
         case CLIENT_DATA_READ_FROM_DATABASE:
@@ -93,19 +91,18 @@ int client_delete(CLIENT_DATA *client_data)
             break;
         default:
             client_data_clear(client_data);
-            return 0;
+            return;
     }
 
     client_data->flag = CLIENT_DATA_DELETE;
 
-    return 0;
 }
 
 int repair_add(REPAIR *repair, ...)
 {
-    if (repair) {
-        REPAIR_REQUEST_FLAG flag = repair->flag;
-
+    REPAIR_MANIPULATE_HELPER(
+        repair_add,
+        ADD,
         switch (flag) {
             case REPAIR_REQUEST_DELETE:
             case REPAIR_REQUEST_READ_FROM_DATABASE:
@@ -115,90 +112,37 @@ int repair_add(REPAIR *repair, ...)
                 flag = REPAIR_REQUEST_NEW;
             default:
         }
+    )
+}
 
-        REPAIR_TOUCHED touched = 0;
-        va_list args;
-
-        va_start(args, repair);
-        DB_ADD_ENUM_COMMAND command;
-        void *p;
-        int err = 0;
-        while ((command = (DB_ADD_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) {
-            p = (void *)va_arg(args, void *);
-            switch (command) {
-                case DB_REPAIR_ADD_CLIENT_ID:
-                    size_t id_as_size_t = (size_t)((intptr_t)p);
-                    if (id_as_size_t <= INT32_MAX) {
-                        repair->client_id = (int32_t)id_as_size_t;
-                        touched |= REPAIR_CLIENT_ID_COMMAND_TOUCHED;
-                        break;
-                    }
-                    err = DB_REPAIR_ADD_CLIENT_ID_LIMIT_REACHED;
-                    goto repair_add_exit1;
-                case DB_REPAIR_ADD_IS_BUDGET:
-                    repair->is_bugdet = (bool)((intptr_t)p);
-                    touched |= REPAIR_IS_BUDGET_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_DEVICE_PROBLEM:
-                    repair->device_problem = (ELECTRONIC_DEVICE_PROBLEM)((uintptr_t)p);
-                    touched |= REPAIR_DEVICE_PROBLEM_COMMAND_TOUCHED; 
-                    break;
-                case DB_REPAIR_ADD_BRAND_MODEL:
-                    DB_COPY_STR_FROM(repair->brand_model, (char *)p)
-                    touched |= REPAIR_BRAND_MODEL_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_SERIAL_NUMBER:
-                    DB_COPY_STR_FROM(repair->serial_number, (char *)p)
-                    touched |= REPAIR_SERIAL_MODEL_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_CLAIMED_DEFECT:
-                    DB_COPY_STR_FROM(repair->claimed_defect, (char *)p)
-                    touched |= REPAIR_CLAIMED_DEFECT_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_OBSERVATION:
-                    DB_COPY_STR_FROM(repair->observations, (char *)p)
-                    touched |= REPAIR_OBSERVATIONS_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_MONETARY_TYPE:
-                    repair->monetary_type = (MONETARY_TYPE)((uintptr_t)p);
-                    touched |= REPAIR_MONETARY_TYPE_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_EXPECTED_BUDGET_DATE:
-                    repair->expected_budget_date = (time_t)((uintptr_t)p);
-                    touched |= REPAIR_EXPECTED_BUDGET_DATE_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_EXPECTED_DELIVERY_DATE:
-                    repair->expected_delivery_date = (time_t)((uintptr_t)p);
-                    touched |= REPAIR_EXPECTED_DELIVERY_DATE_DATE_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_LABOR_BUDGET:
-                    repair->labor_bugdet = (int64_t)((uintptr_t)p);
-                    touched |= REPAIR_LABOR_BUDEGET_DATE_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_DELIVERY_DATE:
-                    repair->delivery_date = (time_t)((uintptr_t)p);
-                    touched |= REPAIR_DELIVERY_DATE_COMMAND_TOUCHED;
-                    break;
-                case DB_REPAIR_ADD_WARRANTY:
-                    repair->warranty = (time_t)((uintptr_t)p);
-                    touched |= REPAIR_WARRANTY_DATE_COMMAND_TOUCHED;
-                    break;
-                default:
-                    err = DB_REPAIR_INVALID_COMMAND;
-                    goto repair_add_exit1;
-            }
+int repair_update(REPAIR *repair, ...)
+{
+    REPAIR_MANIPULATE_HELPER(
+        repair_update,
+        UPDATE,
+        switch (flag) {
+            case REPAIR_REQUEST_UPDATE:
+            case REPAIR_REQUEST_READ_FROM_DATABASE:
+                flag = REPAIR_REQUEST_UPDATE;
+                break;
+            default:
+                return DB_REPAIR_UNABLE_TO_UPDATE;
         }
+    )
+}
 
-repair_add_exit1:
-        va_end(args);
-
-        if (err == 0) {
-            repair->touched = touched;
-            repair->flag = flag;
-        }
-        return 0;
+void repair_delete(REPAIR *repair)
+{
+    switch (repair->flag) {
+        case REPAIR_REQUEST_READ_FROM_DATABASE:
+        case REPAIR_REQUEST_UPDATE:
+            break;
+        default:
+            repair_request_clear(repair);
+            return;
     }
-    return DB_REPAIR_ADD_INVALID;
+
+    repair->flag = REPAIR_REQUEST_DELETE;
 }
 
 int service_add(SERVICE *service, ...)
