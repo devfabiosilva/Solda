@@ -28,6 +28,7 @@ typedef enum service_request_flag_e {
 
 typedef struct service_request_t {
   uint32_t id;                                     // PK
+  int32_t version;
   uint32_t repair_request_id;                      // FK for request
   int32_t touched;
   time_t created_at;                               // Created service request
@@ -37,6 +38,17 @@ typedef struct service_request_t {
   int64_t unity_price;                             // Unity price (required)
   char description[LONG_DESCRIPTION_BUF];          // Description (required)
 } SERVICE;
+
+typedef enum service_request_touched_e {
+  SERVICE_TOUCHED = true,
+  SERVICE_VERSION_TOUCHED = DB_SET_TOUCHED(1),
+  SERVICE_REPAIR_REQUEST_ID = DB_SET_TOUCHED(2),
+  SERVICE_CREATED_AT = DB_SET_TOUCHED(3),
+  SERVICE_QUANTITY = DB_SET_TOUCHED(4),
+  SERVICE_MONETARY_TYPE = DB_SET_TOUCHED(5),
+  SERVICE_UNITY_PRICE = DB_SET_TOUCHED(6),
+  SERVICE_DESCRIPTION = DB_SET_TOUCHED(7)
+} SERVICE_REQUEST_TOUCHED;
 
 typedef struct service_requests_t {
   size_t n;                                        // Actual array size

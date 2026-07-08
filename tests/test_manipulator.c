@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 int test_add_manipulation()
 {
     TITLE_MSG("Begin test_add_manipulation ...")
-   TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
+    TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
     int err = technician_data_requests_init(&technician_requests);
     if (err) {
         printf("\ntechnician_data_requests_init error %d\n", err);
@@ -40,6 +40,22 @@ int test_add_manipulation()
         TECHNICIAN_ADD_EMAIL("email@email.com"),
         TECHNICIAN_ADD_PHONE_NUMBER("12345-67890"),
         TECHNICIAN_ADD_RULES(IS_ROOT_ADMIN_SUPREME)
+    )
+
+    int32_t technician_touch_matched = 
+        TECHNICIAN_NAME_TOUCHED | TECHNICIAN_EMAIL_TOUCHED |
+        TECHNICIAN_PHONE_NUMBER_TOUCHED | TECHNICIAN_RULES_TOUCHED;
+    C_ASSERT_EQUAL_U32(
+        technician_touch_matched, technician_data->touched,
+        CTEST_SETTER(
+            CTEST_TITLE("Touched field must be match with expected with %d.", technician_touch_matched)
+        )
+    )
+    C_ASSERT_EQUAL_STRING(
+        "name ABC", technician_data->name,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking name field on Technician data ...")
+        )
     )
 
     if (err) goto test_add_manipulation_exit;

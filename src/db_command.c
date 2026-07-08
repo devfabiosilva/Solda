@@ -36,18 +36,21 @@ int technician_update(TECHNICIAN_DATA *technician_data, ...)
     )
 }
 
+extern void _technician_data_clear(TECHNICIAN_DATA *);
 void technician_delete(TECHNICIAN_DATA *technician_data)
 {
-    switch (technician_data->flag) {
-        case TECHNICIAN_READ_FROM_DATABASE:
-        case TECHNICIAN_DATA_UPDATE:
-            break;
-        default:
-            technician_data_clear(technician_data);
-            return;
-    }
+    if (technician_data) {
+        switch (technician_data->flag) {
+            case TECHNICIAN_READ_FROM_DATABASE:
+            case TECHNICIAN_DATA_UPDATE:
+                break;
+            default:
+                _technician_data_clear(technician_data);
+                return;
+        }
 
-    technician_data->flag = TECHNICIAN_DATA_DELETE;
+        technician_data->flag = TECHNICIAN_DATA_DELETE;
+    }
 }
 
 int client_add(CLIENT_DATA *client_data, ...)
@@ -83,18 +86,21 @@ int client_update(CLIENT_DATA *client_data, ...)
     )
 }
 
+extern void _client_data_clear(CLIENT_DATA *);
 void client_delete(CLIENT_DATA *client_data)
 {
-    switch (client_data->flag) {
-        case CLIENT_DATA_READ_FROM_DATABASE:
-        case CLIENT_DATA_UPDATE:
-            break;
-        default:
-            client_data_clear(client_data);
-            return;
-    }
+    if (client_data) {
+        switch (client_data->flag) {
+            case CLIENT_DATA_READ_FROM_DATABASE:
+            case CLIENT_DATA_UPDATE:
+                break;
+            default:
+                _client_data_clear(client_data);
+                return;
+        }
 
-    client_data->flag = CLIENT_DATA_DELETE;
+        client_data->flag = CLIENT_DATA_DELETE;
+    }
 
 }
 
@@ -131,25 +137,28 @@ int repair_update(REPAIR *repair, ...)
     )
 }
 
+extern void _repair_request_clear(REPAIR *);
 void repair_delete(REPAIR *repair)
 {
-    switch (repair->flag) {
-        case REPAIR_REQUEST_READ_FROM_DATABASE:
-        case REPAIR_REQUEST_UPDATE:
-            break;
-        default:
-            repair_request_clear(repair);
-            return;
-    }
+    if (repair) {
+        switch (repair->flag) {
+            case REPAIR_REQUEST_READ_FROM_DATABASE:
+            case REPAIR_REQUEST_UPDATE:
+                break;
+            default:
+                _repair_request_clear(repair);
+                return;
+        }
 
-    repair->flag = REPAIR_REQUEST_DELETE;
+        repair->flag = REPAIR_REQUEST_DELETE;
+    }
 }
 
 int service_add(SERVICE *service, ...)
 {
-    if (service) {
-        SERVICE_REQUEST_FLAG flag = service->flag;
-
+    SERVICE_MANIPULATE_HELPER(
+        service_add,
+        ADD,
         switch (flag) {
             case SERVICE_REQUEST_DELETE:
             case SERVICE_REQUEST_READ_FROM_DATABASE:
@@ -158,56 +167,38 @@ int service_add(SERVICE *service, ...)
             case SERVICE_REQUEST_NEW_AND_DELETED_BEFORE_SAVE:
                 flag = SERVICE_REQUEST_NEW;
             default:
-        }
-        va_list args;
-
-        va_start(args, service);
-        DB_ADD_ENUM_COMMAND command;
-        void *p;
-        int err = 0;
-        while ((command = (DB_ADD_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) {
-            p = (void *)va_arg(args, void *);
-            switch (command) {
-                case DB_SERVICE_ADD_REPAIR_REQUEST_ID:
-                    size_t id_as_size_t = (size_t)((intptr_t)p);
-                    if (id_as_size_t <= INT32_MAX) {
-                        service->repair_request_id = (int32_t)id_as_size_t;
-                        break;
-                    }
-                    err = DB_SERVICE_ADD_REPAIR_REQUEST_ID_LIMIT_REACHED;
-                    goto service_add_exit1;
-                case DB_SERVICE_ADD_QUANTITY:
-                    int32_t quantity = (int32_t)((uintptr_t)p);
-                    if (quantity > 0) {
-                        service->quantity = quantity;
-                        break;
-                    }
-                    err = DB_SERVICE_ADD_QUANTITY_INVALID;
-                    goto service_add_exit1;
-                case DB_SERVICE_ADD_MONETARY_TYPE:
-                    service->monetary_type = (MONETARY_TYPE)((uintptr_t)p);
-                    break;
-                case DB_SERVICE_ADD_UNITY_PRICE:
-                    service->unity_price = (int64_t)((uintptr_t)p);
-                    break;
-                case DB_SERVICE_ADD_DESCRIPTION:
-                    DB_COPY_STR_FROM(service->description, (char *)p)
-                    break;
-                default:
-                    err = DB_SERVICE_INVALID_COMMAND;
-                    goto service_add_exit1;
-            }
-        }
-
-service_add_exit1:
-        va_end(args);
-
-        if (err == 0) {
-            service->touched = true;
-            service->flag = flag;
-        }
-        return 0;
-    }
-    return DB_SERVICE_INVALID;
+        }        
+    )
 }
 
+int service_update(SERVICE *service, ...)
+{
+    SERVICE_MANIPULATE_HELPER(
+        service_update,
+        UPDATE,
+        switch (flag) {
+            case SERVICE_REQUEST_UPDATE:
+            case SERVICE_REQUEST_READ_FROM_DATABASE:
+                flag = SERVICE_REQUEST_UPDATE;
+                break;
+            default:
+                return DB_SERVICE_UNABLE_TO_UPDATE;
+        }        
+    )
+}
+
+void service_delete(SERVICE *service)
+{
+    if (service) {
+        switch (service->flag) {
+            case SERVICE_REQUEST_READ_FROM_DATABASE:
+            case SERVICE_REQUEST_UPDATE:
+                break;
+            default:
+                explicit_bzero((void *)service, sizeof(*service));;
+                return;
+        }
+
+        service->flag = SERVICE_REQUEST_DELETE;
+    }
+}

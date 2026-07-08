@@ -216,5 +216,66 @@ func##_exit1: \
     } \
     return DB_REPAIR_##action##_INVALID;
 
+#define SERVICE_MANIPULATE_HELPER(func, action, text) \
+    if (service) { \
+        SERVICE_REQUEST_FLAG flag = service->flag; \
+\
+        text \
+        va_list args; \
+        SERVICE_REQUEST_TOUCHED touched = 0; \
+        va_start(args, service); \
+        DB_##action##_ENUM_COMMAND command; \
+        void *p; \
+        int err = 0; \
+        while ((command = (DB_##action##_ENUM_COMMAND)va_arg(args, DB_##action##_ENUM_COMMAND))) { \
+            p = (void *)va_arg(args, void *); \
+            switch (command) { \
+                case DB_SERVICE_##action##_REPAIR_REQUEST_ID: \
+                    size_t id_as_size_t = (size_t)((intptr_t)p); \
+                    if (id_as_size_t <= INT32_MAX) { \
+                        service->repair_request_id = (int32_t)id_as_size_t; \
+                        touched |= SERVICE_REPAIR_REQUEST_ID; \
+                        break; \
+                    } \
+                    err = DB_SERVICE_##action##_REPAIR_REQUEST_ID_LIMIT_REACHED; \
+                    goto func##_exit1; \
+                case DB_SERVICE_##action##_QUANTITY: \
+                    int32_t quantity = (int32_t)((uintptr_t)p); \
+                    if (quantity > 0) { \
+                        service->quantity = quantity; \
+                        touched |= SERVICE_QUANTITY; \
+                        break; \
+                    } \
+                    err = DB_SERVICE_##action##_QUANTITY_INVALID; \
+                    goto func##_exit1; \
+                case DB_SERVICE_##action##_MONETARY_TYPE: \
+                    service->monetary_type = (MONETARY_TYPE)((uintptr_t)p); \
+                    touched |= SERVICE_MONETARY_TYPE; \
+                    break; \
+                case DB_SERVICE_##action##_UNITY_PRICE: \
+                    service->unity_price = (int64_t)((uintptr_t)p); \
+                    touched |= SERVICE_UNITY_PRICE; \
+                    break; \
+                case DB_SERVICE_##action##_DESCRIPTION: \
+                    DB_COPY_STR_FROM(service->description, (char *)p) \
+                    touched |= SERVICE_DESCRIPTION; \
+                    break; \
+                default: \
+                    err = DB_SERVICE_INVALID_COMMAND; \
+                    goto func##_exit1; \
+            } \
+        } \
+\
+func##_exit1: \
+        va_end(args); \
+\
+        if (err == 0) { \
+            service->touched = touched; \
+            service->flag = flag; \
+        }\
+        return 0; \
+    } \
+    return DB_SERVICE_INVALID;
+
 #endif
 

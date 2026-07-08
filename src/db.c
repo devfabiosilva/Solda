@@ -102,7 +102,7 @@ static void client_data_requests_free(CLIENT_DATA_REQUESTS *client_data_request)
 // END CLIENT DATA INITIALIZATION
 
 // BEGIN CLEAR ALL EDIT/ADD/DELETE records (NOT STORED IN DATABASE)
-static void _client_data_clear(CLIENT_DATA *client_data) {
+void _client_data_clear(CLIENT_DATA *client_data) {
     size_t array_max_len = client_data->repair_requests.array_max_len;
     REPAIR *array = client_data->repair_requests.array;
  
@@ -151,7 +151,7 @@ void technician_data_requests_free(TECHNICIAN_DATA_REQUESTS **requests)
     }
 }
 
-static void _technician_data_clear(TECHNICIAN_DATA *request)
+void _technician_data_clear(TECHNICIAN_DATA *request)
 {
     size_t array_max_len = request->client_requests.array_max_len;
     CLIENT_DATA *client_data_array = request->client_requests.array;
