@@ -4,6 +4,7 @@
 #include <db_command.h>
 #include <time.h>
 #include <tests/asserts.h>
+#include <stdlib.h>
 
 int test_add_manipulation();
 
@@ -15,15 +16,26 @@ int main(int argc, char **argv)
   return test_add_manipulation();
 }
 
+static void test_add_manipulation_destroy_on_failure(void *ctx)
+{
+    ERROR_MSG_FMT("FAILURE: Destroying **technician_requests %p ...", (uintptr_t)ctx)
+    technician_data_requests_free((TECHNICIAN_DATA_REQUESTS **)ctx);
+    ERROR_MSG_FMT("Destroyed. Exiting ... %p ...", (uintptr_t)ctx)
+    end_tests();
+    exit(EXIT_FAILURE);
+}
+
 int test_add_manipulation()
 {
     TITLE_MSG("Begin test_add_manipulation ...")
-    TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
+    static TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
     int err = technician_data_requests_init(&technician_requests);
     if (err) {
         printf("\ntechnician_data_requests_init error %d\n", err);
         return err;
     }
+
+    C_ASSERT_NOT_NULL(technician_requests)
 
     size_t technician_index;
     TECHNICIAN_DATA *technician_data = NULL;
@@ -35,12 +47,17 @@ int test_add_manipulation()
 
     printf("\ntechnician_data index %d and pointer %p", (int)technician_index, technician_data);
 
+    char *expected_name_in_technician = "name ABC";
+    char *expected_email_in_technician = "email@email.com";
+    char *expected_phone_number_in_technician = "12345-67890";
     err = TECHNICIAN_EXECUTE_ADD(technician_data,
-        TECHNICIAN_ADD_NAME("name ABC"),
-        TECHNICIAN_ADD_EMAIL("email@email.com"),
-        TECHNICIAN_ADD_PHONE_NUMBER("12345-67890"),
+        TECHNICIAN_ADD_NAME(expected_name_in_technician),
+        TECHNICIAN_ADD_EMAIL(expected_email_in_technician),
+        TECHNICIAN_ADD_PHONE_NUMBER(expected_phone_number_in_technician),
         TECHNICIAN_ADD_RULES(IS_ROOT_ADMIN_SUPREME)
     )
+
+    if (err) goto test_add_manipulation_exit;
 
     int32_t technician_touch_matched = 
         TECHNICIAN_NAME_TOUCHED | TECHNICIAN_EMAIL_TOUCHED |
@@ -48,17 +65,104 @@ int test_add_manipulation()
     C_ASSERT_EQUAL_U32(
         technician_touch_matched, technician_data->touched,
         CTEST_SETTER(
-            CTEST_TITLE("Touched field must be match with expected with %d.", technician_touch_matched)
-        )
-    )
-    C_ASSERT_EQUAL_STRING(
-        "name ABC", technician_data->name,
-        CTEST_SETTER(
-            CTEST_TITLE("Checking name field on Technician data ...")
+            CTEST_TITLE("Touched field must be match with expected with %d.", technician_touch_matched),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests)
         )
     )
 
-    if (err) goto test_add_manipulation_exit;
+    C_ASSERT_EQUAL_S32(0, technician_data->id,
+        CTEST_SETTER(
+            CTEST_TITLE("Check technician ID ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed tecnician id value. Was expected 0 but found %d", technician_data->id)
+        )
+    )
+
+    C_ASSERT_EQUAL_S32(0, technician_data->version,
+        CTEST_SETTER(
+            CTEST_TITLE("Check technician version ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed tecnician version value. Was expected 0 but found %d", technician_data->version)
+        )
+    )
+
+    C_ASSERT_EQUAL_INT(IS_ROOT_ADMIN_SUPREME, technician_data->rules,
+        CTEST_SETTER(
+            CTEST_TITLE("Check technician rules ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed tecnician rules value. Was expected NO_ACCESS (0) but found %d", technician_data->version)
+        )
+    )
+
+    C_ASSERT_EQUAL_INT(TECHNICIAN_DATA_NEW, technician_data->flag,
+        CTEST_SETTER(
+            CTEST_TITLE("Check technician initialize in memory flag ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed tecnician flag value. Was expected TECHNICIAN_DATA_NEW (%d) but found %d", TECHNICIAN_DATA_NEW, technician_data->version)
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        0, (uint64_t)technician_data->created_at,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking created at field in technician data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %lu but found %lu", 0U, (uint64_t)technician_data->created_at)
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        expected_name_in_technician, technician_data->name,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking name field on Technician data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", expected_name_in_technician, technician_data->name)
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        expected_email_in_technician, technician_data->email,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking email field on Technician data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", expected_email_in_technician, technician_data->email)
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        expected_phone_number_in_technician, technician_data->phone_number,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking phone number field on Technician data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", expected_phone_number_in_technician, technician_data->phone_number)
+        )
+    )
+
+    C_ASSERT_NULL(technician_data->client_requests.array,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking client_requests.array field in Technician data is NULL (lazy mode) ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected NULL but NOT NULL found")
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        0, (uint64_t)technician_data->client_requests.n,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking client_requests.n in technician data (lazy mode) ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 size array but found %lu", (uint64_t)technician_data->client_requests.n)
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        0, (uint64_t)technician_data->client_requests.array_max_len,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking client_requests.array_max_len in technician data (lazy mode) ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 size array but found %lu", (uint64_t)technician_data->client_requests.array_max_len)
+        )
+    )
 
     size_t client_data_index;
     CLIENT_DATA *client_data = NULL;
@@ -74,21 +178,53 @@ int test_add_manipulation()
 
     printf("\nclient_data index %d and pointer %p", (int)client_data_index, client_data);
 
+    char *client_cpf = "111.111.111.00";
+    char *client_name = "Fernanda Silva";
+    char *client_address = "Client Address";
+    char *client_district_city = "Rua XYZ Quadra A";
+    char *client_email = "fernanda@email.com";
+    char *client_phone_number = "(21) 91234-6789";
     err = CLIENT_EXECUTE_ADD(
             client_data,
             CLIENT_ADD_TECHNICIAN_ID(technician_index),
-            CLIENT_ADD_CPF("111.111.111.00"),
-            CLIENT_ADD_NAME("Fernanda Silva"),
-            CLIENT_ADD_ADDRESS("Client Address"),
-            CLIENT_ADD_DISTRICT_CITY("Rua XYZ Quadra A"),
-            CLIENT_ADD_EMAIL("fernanda@email.com"),
-            CLIENT_ADD_PHONE_NUMBER("(21) 91234-6789")
+            CLIENT_ADD_CPF(client_cpf),
+            CLIENT_ADD_NAME(client_name),
+            CLIENT_ADD_ADDRESS(client_address),
+            CLIENT_ADD_DISTRICT_CITY(client_district_city),
+            CLIENT_ADD_EMAIL(client_email),
+            CLIENT_ADD_PHONE_NUMBER(client_phone_number)
         )
 
     if (err) goto test_add_manipulation_exit;
 
+    int32_t client_touch_matched = 
+        CLIENT_TECHNICIAN_ID_COMMAND_TOUCHED | CLIENT_CPF_COMMAND_TOUCHED |
+        CLIENT_NAME_COMMAND_TOUCHED | CLIENT_ADDRESS_COMMAND_TOUCHED |
+        CLIENT_DISTRICT_CITY_COMMAND_TOUCHED | CLIENT_EMAIL_COMMAND_TOUCHED |
+        CLIENT_PHONE_NUMBER_COMMAND_TOUCHED;
+
+    C_ASSERT_EQUAL_U32(
+        client_touch_matched, client_data->touched,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking touched in client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected touched %d size array but found %d", client_touch_matched, client_data->touched),
+            CTEST_ON_SUCCESS("Test touched success for client data")
+        )
+    )
+
     printf("\nValue of %p of %s\n", client_data, client_data->name);
 
+    C_ASSERT_EQUAL_STRING(
+        client_cpf, client_data->cpf,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking cpf field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", client_cpf, client_data->cpf),
+            CTEST_ON_SUCCESS("Test cpf field success for client data")
+        )
+    )
+//TODO continue...
     size_t repair_request_index;
     REPAIR *repair = NULL;
     if ((err = technician_acquire_repair_request_from_array(
@@ -144,10 +280,13 @@ int test_add_manipulation()
         printf("\nValue of %p of %s\n", service, service->description);
 
 test_add_manipulation_exit:
-    printf("\ntechnician_requests pointer %p\n", technician_requests);
+    printf("\ntechnician_requests pointer before free %p\n", technician_requests);
     technician_data_requests_free(&technician_requests);
-    printf("\ntechnician_requests pointer %p\n", technician_requests);
+    printf("\ntechnician_requests pointer after free %p\n", technician_requests);
     printf("\n status %d\n", err);
+    C_ASSERT_NULL(technician_requests)
+    C_ASSERT_EQUAL_INT(0, err)
+    end_tests();
     TITLE_MSG("End test_add_manipulation ...")
     return err;
 }
