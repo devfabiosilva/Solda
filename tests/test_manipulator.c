@@ -215,6 +215,42 @@ int test_add_manipulation()
 
     printf("\nValue of %p of %s\n", client_data, client_data->name);
 
+    C_ASSERT_EQUAL_S32(0, client_data->id,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking id field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 but found %d", client_data->id),
+            CTEST_ON_SUCCESS("Test id field success for client data")
+        )
+    )
+
+    C_ASSERT_EQUAL_S32(0, client_data->technician_id,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking technician_id field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 but found %d", client_data->technician_id),
+            CTEST_ON_SUCCESS("Test technician_id field success for client data")
+        )
+    )
+
+    C_ASSERT_EQUAL_S32(0, client_data->version,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking version field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 but found %d", client_data->version),
+            CTEST_ON_SUCCESS("Test version field success for client data")
+        )
+    )
+
+    C_ASSERT_EQUAL_U32(0, (uint64_t)client_data->created_at,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking version created_at on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 but found %lu", client_data->created_at),
+            CTEST_ON_SUCCESS("Test created_at field success for client data")
+        )
+    )
+
     C_ASSERT_EQUAL_STRING(
         client_cpf, client_data->cpf,
         CTEST_SETTER(
@@ -224,6 +260,83 @@ int test_add_manipulation()
             CTEST_ON_SUCCESS("Test cpf field success for client data")
         )
     )
+
+    C_ASSERT_EQUAL_STRING(
+        client_name, client_data->name,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking name field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", client_name, client_data->name),
+            CTEST_ON_SUCCESS("Test name field success for client data")
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        client_address, client_data->address,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking address field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", client_address, client_data->address),
+            CTEST_ON_SUCCESS("Test address field success for client data")
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        client_district_city, client_data->district_city,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking district_city field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", client_district_city, client_data->district_city),
+            CTEST_ON_SUCCESS("Test district_city field success for client data")
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        client_email, client_data->email,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking email field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", client_email, client_data->email),
+            CTEST_ON_SUCCESS("Test email field success for client data")
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        client_phone_number, client_data->phone_number,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking phone_number field on client data ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", client_phone_number, client_data->phone_number),
+            CTEST_ON_SUCCESS("Test phone_number field success for client data")
+        )
+    )
+
+    C_ASSERT_NULL(client_data->repair_requests.array,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking repair_requests.array field in client data is NULL (lazy mode) ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected NULL but NOT NULL found")
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        0, (uint64_t)client_data->repair_requests.n,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking repair_requests.n in client data (lazy mode) ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 size array but found %lu", (uint64_t)client_data->repair_requests.n)
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        0, (uint64_t)client_data->repair_requests.array_max_len,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking repair_requests.array_max_len in client data (lazy mode) ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected 0 size array but found %lu", (uint64_t)client_data->repair_requests.array_max_len)
+        )
+    )
+
 //TODO continue...
     size_t repair_request_index;
     REPAIR *repair = NULL;
