@@ -115,7 +115,7 @@ typedef struct repair_request_t {
   MONETARY_TYPE monetary_type;                        // Monetary type
   time_t expected_budget_date;                        // Expected bugdget date
   time_t expected_delivery_date;                      // Expected delivery date
-  int64_t labor_bugdet;                               // labor_bugdet // Fixed point. TODO check validation
+  int64_t labor_budget;                               // labor_bugdet // Fixed point. TODO check validation
   time_t delivery_date;                               // Delivery date
   time_t warranty;                                    // Total day from delivery date
   SERVICE_REQUESTS optional_service_requests;         // ARRAY NULLABLE List of service requests

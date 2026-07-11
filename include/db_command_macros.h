@@ -188,7 +188,7 @@ func##_exit1: \
                     touched |= REPAIR_EXPECTED_DELIVERY_DATE_DATE_COMMAND_TOUCHED; \
                     break; \
                 case DB_REPAIR_##action##_LABOR_BUDGET: \
-                    repair->labor_bugdet = (int64_t)((uintptr_t)p); \
+                    repair->labor_budget = (int64_t)((uintptr_t)p); \
                     touched |= REPAIR_LABOR_BUDEGET_DATE_COMMAND_TOUCHED; \
                     break; \
                 case DB_REPAIR_##action##_DELIVERY_DATE: \

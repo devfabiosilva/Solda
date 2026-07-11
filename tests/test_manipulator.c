@@ -337,7 +337,6 @@ int test_add_manipulation()
         )
     )
 
-//TODO continue...
     size_t repair_request_index;
     REPAIR *repair = NULL;
     if ((err = technician_acquire_repair_request_from_array(
@@ -350,26 +349,155 @@ int test_add_manipulation()
 
     printf("\nrepair index %d and pointer %p", (int)repair_request_index, repair);
 
+    int32_t client_id = 1234;
+    bool is_budget = true;
+    ELECTRONIC_DEVICE_PROBLEM device_problem = DEVICE_DOES_NOT_TURN_ON;
+    char *brand_model = "MODEL ABC";
+    char *serial_number = "1234567890";
+    char *claimed_defect = "Device Problem";
+    char *observation = "Observations test";
+    time_t expected_budget_date = time(NULL) + 1;
+    time_t expected_delivery_date = expected_budget_date + 1;
+    int64_t labor_budget = 18000; 
+    MONETARY_TYPE monetary_type = BITCOIN;
+    time_t delivery_date = expected_delivery_date + 1;
+    time_t warranty = delivery_date + 1;
     err = REPAIR_EXECUTE_ADD(
         repair,
-        REPAIR_ADD_CLIENT_ID(1234),
-        REPAIR_ADD_IS_BUDGET(true),
-        REPAIR_ADD_DEVICE_PROBLEM(DEVICE_DOES_NOT_TURN_ON),
-        REPAIR_ADD_BRAND_MODEL("MODEL ABC"),
-        REPAIR_ADD_SERIAL_NUMBER("1234567890"),
-        REPAIR_ADD_CLAIMED_DEFECT("Device Problem"),
-        REPAIR_ADD_OBSERVATION("Observations test"),
-        REPAIR_ADD_MONETARY_TYPE(BITCOIN),
-        REPAIR_ADD_EXPECTED_BUDGET_DATE(time(NULL)),
-        REPAIR_ADD_EXPECTED_DELIVERY_DATE(time(NULL)),
-        REPAIR_ADD_LABOR_BUDGET(18000),
-        REPAIR_ADD_DELIVERY_DATE(time(NULL)),
-        REPAIR_ADD_WARRANTY(time(NULL))
+        REPAIR_ADD_CLIENT_ID(client_id),
+        REPAIR_ADD_IS_BUDGET(is_budget),
+        REPAIR_ADD_DEVICE_PROBLEM(device_problem),
+        REPAIR_ADD_BRAND_MODEL(brand_model),
+        REPAIR_ADD_SERIAL_NUMBER(serial_number),
+        REPAIR_ADD_CLAIMED_DEFECT(claimed_defect),
+        REPAIR_ADD_OBSERVATION(observation),
+        REPAIR_ADD_MONETARY_TYPE(monetary_type),
+        REPAIR_ADD_EXPECTED_BUDGET_DATE(expected_budget_date),
+        REPAIR_ADD_EXPECTED_DELIVERY_DATE(expected_delivery_date),
+        REPAIR_ADD_LABOR_BUDGET(labor_budget),
+        REPAIR_ADD_DELIVERY_DATE(delivery_date),
+        REPAIR_ADD_WARRANTY(warranty)
     )
 
     if (err) goto test_add_manipulation_exit;
 
-    printf("\nValue of %p of %s\n", repair, repair->claimed_defect);
+    C_ASSERT_EQUAL_S32(
+        client_id, repair->client_id,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking client_id in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %d but found %d", client_id, repair->client_id)
+        )
+    )
+
+    C_ASSERT_TRUE(
+        is_budget == repair->is_bugdet,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking is_bugdet in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected repair->is_bugdet = %d but found %d", is_budget, (int)repair->is_bugdet)
+        )
+    )
+
+    C_ASSERT_EQUAL_INT(
+        device_problem, repair->device_problem,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking device_problem in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %d but found %d", device_problem, repair->device_problem)
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        brand_model, repair->brand_model,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking brand_model in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", brand_model, repair->brand_model)
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        serial_number, repair->serial_number,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking serial_number in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", serial_number, repair->serial_number)
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        claimed_defect, repair->claimed_defect,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking claimed_defect in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", claimed_defect, repair->claimed_defect)
+        )
+    )
+
+    C_ASSERT_EQUAL_STRING(
+        observation, repair->observations,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking observation in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %s but found %s", observation, repair->observations)
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        expected_budget_date, repair->expected_budget_date,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking budget_date in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %lu but found %lu", expected_budget_date, repair->expected_budget_date)
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        expected_delivery_date, repair->expected_delivery_date,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking expected_delivery_date in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %lu but found %lu", expected_delivery_date, repair->expected_delivery_date)
+        )
+    )
+
+    C_ASSERT_EQUAL_S64(
+        labor_budget, repair->labor_budget,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking labor_bugdet in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %lu but found %lu", labor_budget, repair->labor_budget)
+        )
+    )
+
+    C_ASSERT_EQUAL_INT(
+        monetary_type, repair->monetary_type,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking monetary_type in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %d but found %d", monetary_type, repair->monetary_type)
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        delivery_date, repair->delivery_date,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking delivery_date in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %lu but found %lu", delivery_date, repair->delivery_date)
+        )
+    )
+
+    C_ASSERT_EQUAL_U64(
+        warranty, repair->warranty,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking warranty in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected %lu but found %lu", warranty, repair->warranty)
+        )
+    )
+
     size_t service_request_index;
     SERVICE *service = NULL;
     if ((err = technician_acquire_service_request_from_array(
@@ -403,4 +531,3 @@ test_add_manipulation_exit:
     TITLE_MSG("End test_add_manipulation ...")
     return err;
 }
-
