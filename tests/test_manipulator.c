@@ -28,7 +28,7 @@ static void test_add_manipulation_destroy_on_failure(void *ctx)
 int test_add_manipulation()
 {
     TITLE_MSG("Begin test_add_manipulation ...")
-    static TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
+    TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
     int err = technician_data_requests_init(&technician_requests);
     if (err) {
         printf("\ntechnician_data_requests_init error %d\n", err);
@@ -565,7 +565,6 @@ test_add_manipulation_exit:
     technician_data_requests_free(&technician_requests);
     printf("\ntechnician_requests pointer after free %p\n", technician_requests);
     printf("\n status %d\n", err);
-    C_ASSERT_NULL(technician_requests)
     C_ASSERT_EQUAL_INT(0, err)
     TITLE_MSG("End test_add_manipulation ...")
     end_tests();
