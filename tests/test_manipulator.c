@@ -208,7 +208,7 @@ int test_add_manipulation()
         CTEST_SETTER(
             CTEST_TITLE("Checking touched in client data ..."),
             CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
-            CTEST_ON_ERROR("Failed. Was expected touched %d size array but found %d", client_touch_matched, client_data->touched),
+            CTEST_ON_ERROR("Failed. Was expected touched %d but found %d", client_touch_matched, client_data->touched),
             CTEST_ON_SUCCESS("Test touched success for client data")
         )
     )
@@ -381,6 +381,25 @@ int test_add_manipulation()
 
     if (err) goto test_add_manipulation_exit;
 
+    int32_t repair_touch_matched = 
+        REPAIR_CLIENT_ID_COMMAND_TOUCHED|REPAIR_IS_BUDGET_COMMAND_TOUCHED|
+        REPAIR_DEVICE_PROBLEM_COMMAND_TOUCHED|REPAIR_BRAND_MODEL_COMMAND_TOUCHED|
+        REPAIR_SERIAL_MODEL_COMMAND_TOUCHED|REPAIR_CLAIMED_DEFECT_COMMAND_TOUCHED|
+        REPAIR_OBSERVATIONS_COMMAND_TOUCHED|REPAIR_MONETARY_TYPE_COMMAND_TOUCHED|
+        REPAIR_EXPECTED_BUDGET_DATE_COMMAND_TOUCHED|REPAIR_EXPECTED_DELIVERY_DATE_DATE_COMMAND_TOUCHED|
+        REPAIR_LABOR_BUDEGET_DATE_COMMAND_TOUCHED|REPAIR_DELIVERY_DATE_COMMAND_TOUCHED|
+        REPAIR_WARRANTY_DATE_COMMAND_TOUCHED;
+
+    C_ASSERT_EQUAL_U32(
+        repair_touch_matched, repair->touched,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking touched in repair ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected touched %d but found %d", repair_touch_matched, repair->touched),
+            CTEST_ON_SUCCESS("Test touched success for repair")
+        )
+    )
+
     C_ASSERT_EQUAL_S32(
         client_id, repair->client_id,
         CTEST_SETTER(
@@ -508,17 +527,38 @@ int test_add_manipulation()
 
     printf("\nservice index %d and pointer %p", (int)service_request_index, service);
 
+    int request_id = 567890;
+    int32_t quantity = 172;
+    MONETARY_TYPE servic_monetary_type = US_DOLLAR;
+    int64_t service_unity_price = 29030;
+    char *service_description = "Service description goes here";
     err = SERVICE_EXECUTE_ADD(
         service,
-        SERVICE_REPAIR_REQUEST_ID(1234),
-        SERVICE_QUANTITY(172),
-        SERVICE_MONETARY_TYPE(US_DOLLAR),
-        SERVICE_UNITY_PRICE(29030),
-        SERVICE_DESCRIPTION("Service description goes here")
+        SERVICE_REPAIR_REQUEST_ID(request_id),
+        SERVICE_QUANTITY(quantity),
+        SERVICE_MONETARY_TYPE(servic_monetary_type),
+        SERVICE_UNITY_PRICE(service_unity_price),
+        SERVICE_DESCRIPTION(service_description)
     )
 
-    if (err == 0)
-        printf("\nValue of %p of %s\n", service, service->description);
+    if (err != 0)
+        goto test_add_manipulation_exit;
+
+    printf("\nValue of %p of %s\n", service, service->description);
+
+    int32_t service_touch_matched = 
+        SERVICE_REPAIR_REQUEST_ID|SERVICE_QUANTITY|
+        SERVICE_MONETARY_TYPE|SERVICE_UNITY_PRICE|SERVICE_DESCRIPTION;
+
+    C_ASSERT_EQUAL_U32(
+        service_touch_matched, service->touched,
+        CTEST_SETTER(
+            CTEST_TITLE("Checking touched in service ..."),
+            CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+            CTEST_ON_ERROR("Failed. Was expected touched %d but found %d", service_touch_matched, service->touched),
+            CTEST_ON_SUCCESS("Test touched success for service")
+        )
+    )
 
 test_add_manipulation_exit:
     printf("\ntechnician_requests pointer before free %p\n", technician_requests);
@@ -527,7 +567,7 @@ test_add_manipulation_exit:
     printf("\n status %d\n", err);
     C_ASSERT_NULL(technician_requests)
     C_ASSERT_EQUAL_INT(0, err)
-    end_tests();
     TITLE_MSG("End test_add_manipulation ...")
+    end_tests();
     return err;
 }
