@@ -9,6 +9,10 @@ add_compile_options(
     -Wextra
 )
 
+add_link_options(
+    -lpq
+)
+
 # ASAN optional -DASAN=ON
 option(ASAN "Enable AddressSanitizer" ON)
 if(ASAN AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -38,6 +42,7 @@ add_library(solda_core STATIC
     src/db.c
     src/db_command.c
     src/db_memory.c
+    src/db_service.c
 )
 
 # TEST optional -DTEST=ON

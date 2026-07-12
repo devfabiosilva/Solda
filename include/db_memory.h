@@ -13,4 +13,13 @@ void db_clear_and_free(void **, size_t);
         vec_len &= ~(blk_sz - 1); \
     }
 
+#define _DB_FREE(mem) \
+    free((void *)mem); \
+    mem = NULL;
+
+#define _DB_CLEAR_AND_FREE(mem, mem_size) \
+    explicit_bzero((void *)mem, mem_size); \
+\
+    _DB_FREE(mem)
+
 #endif
