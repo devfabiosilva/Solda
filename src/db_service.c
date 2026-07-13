@@ -4,6 +4,36 @@
 #include <db_memory.h>
 #include <string.h>
 #include <db_log.h>
+#include <db_messages.h>
+
+const char *QUERY_ALL_TECHNICIANS = "Query all technicians";
+
+static int _db_init_query(PGconn *conn)
+{
+    DB_DEBUG("Entering _db_init_query ...")
+    DB_DEBUG("Preparing query \"%s\" ...", QUERY_ALL_TECHNICIANS)
+    PGresult *res = PQprepare(
+        conn, QUERY_ALL_TECHNICIANS,
+        "select id, name, created_at, email, rules, version, phone_number from technician_data "
+        "order by name "
+        "limit 10 offset 10",
+        2, NULL
+    );
+
+    DB_DEBUG("Check query \"%s\" ...", QUERY_ALL_TECHNICIANS)
+    int err = 0;
+    if (res) {
+        if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+            DB_ERROR("_db_init_query: PQresultStatus returned error for query QUERY_ALL_TECHNICIANS with message: %s", PQresultErrorMessage(res))
+            err = DB_QUERY_ALL_TECHNICIANS_FAILED;
+        }
+        PQclear(res);
+    } else
+        err = DB_SERVICE_PREPARE_QUERY_ALL_TECHNICIAN_DATA_OUT_OF_MEMORY;
+
+    DB_DEBUG("_db_init_query status: %d ...", err)
+    return err;
+}
 
 int db_service_init(DB_SERVICE **db_service, char *connection)
 {
@@ -24,11 +54,21 @@ _Static_assert(sizeof(*(*db_service)) == sizeof(DB_SERVICE), "Invalid size");
 
                 int err = PQstatus((*db_service)->conn);
                 if (err != CONNECTION_OK) {
-                    fprintf(stderr, "PQstatus error %d with message: %s\n", err, PQerrorMessage((*db_service)->conn));
+                    DB_ERROR("PQstatus error %d with message: %s\n", err, PQerrorMessage((*db_service)->conn));
                     DB_DEBUG("Unable to conect to Postgres service. Destroying Postgres connection and db_service instance")
                     PQfinish((*db_service)->conn);
                     _DB_CLEAR_AND_FREE((*db_service), sizeof(*(*db_service)));
                     DB_DEBUG("Destroyed with error %d", err)
+                    return err;
+                }
+
+                err = _db_init_query((*db_service)->conn);
+
+                if (err) {
+                    DB_DEBUG("db_service_init: Load queries failed with error %d", err)
+                    PQfinish((*db_service)->conn);
+                    _DB_CLEAR_AND_FREE((*db_service), sizeof(*(*db_service)));
+                    DB_DEBUG("Destroyed db_service_init")
                     return err;
                 }
 
@@ -77,4 +117,21 @@ void db_service_free(DB_SERVICE **db_service)
 
         DB_DEBUG("db_service_free: Destroyed")
     }
+}
+
+int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
+{
+    if (db_service) {
+
+        //TODO implement Postgres technician queries
+        DB_SERVICE_RETURN
+    }
+
+    set_db_service_error(
+        db_service,
+        DB_SERVICE_UNABLE_TO_RETRIEVE_TECHNICIANS_REQUESTS,
+        "Null pointer for db_service. Unable to execute"
+    );
+
+    DB_SERVICE_RETURN
 }

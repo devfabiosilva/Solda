@@ -66,6 +66,7 @@ func##_exit1: \
     return DB_TECHNICIAN_DATA_##action##_INVALID;
 
 #define CLIENT_DATA_MANIPULATE_HELPER(func, action, text) \
+    DB_DEBUG(#func ": Access client data at %p", client_data) \
     if (client_data) { \
         CLIENT_DATA_FLAG flag = client_data->flag; \
 \
@@ -86,36 +87,45 @@ func##_exit1: \
                     if (id_as_size_t <= INT32_MAX) { \
                         client_data->technician_id = (int32_t)id_as_size_t; \
                         touched |= CLIENT_TECHNICIAN_ID_COMMAND_TOUCHED; \
+                        DB_DEBUG("\tclient_data->id = %d", client_data->id) \
                         break; \
                     } \
+                    DB_DEBUG("\tclient_data limit reached DB_CLIENT_" #action "_TECHNICIAN_ID_LIMIT_REACHED(%d)", DB_CLIENT_##action##_TECHNICIAN_ID_LIMIT_REACHED) \
                     err = DB_CLIENT_##action##_TECHNICIAN_ID_LIMIT_REACHED; \
                     goto func##_exit1; \
                 case DB_CLIENT_##action##_CPF_COMMAND: \
                     DB_COPY_STR_FROM(client_data->cpf, (char *)p) \
                     touched |= CLIENT_CPF_COMMAND_TOUCHED; \
+                    DB_DEBUG("\tclient_data->cpf = %s", client_data->cpf) \
                     break; \
                 case DB_CLIENT_##action##_NAME_COMMAND: \
                     DB_COPY_STR_FROM(client_data->name, (char *)p) \
                     touched |= CLIENT_NAME_COMMAND_TOUCHED; \
+                    DB_DEBUG("\tclient_data->name = %s", client_data->name) \
                     break; \
                 case DB_CLIENT_##action##_ADDRESS_COMMAND: \
                     DB_COPY_STR_FROM(client_data->address, (char *)p) \
                     touched |= CLIENT_ADDRESS_COMMAND_TOUCHED; \
+                    DB_DEBUG("\tclient_data->address = %s", client_data->address) \
                     break; \
                 case DB_CLIENT_##action##_DISTRICT_CITY_COMMAND: \
                     DB_COPY_STR_FROM(client_data->district_city, (char *)p) \
                     touched |= CLIENT_DISTRICT_CITY_COMMAND_TOUCHED; \
+                    DB_DEBUG("\tclient_data->district_city = %s", client_data->district_city) \
                     break; \
                 case DB_CLIENT_##action##_EMAIL_COMMAND: \
                     DB_COPY_STR_FROM(client_data->email, (char *)p) \
                     touched |= CLIENT_EMAIL_COMMAND_TOUCHED; \
+                    DB_DEBUG("\tclient_data->email = %s", client_data->email) \
                     break; \
                 case DB_CLIENT_##action##_PHONE_NUMBER_COMMAND: \
                     DB_COPY_STR_FROM(client_data->phone_number, (char *)p) \
                     touched |= CLIENT_PHONE_NUMBER_COMMAND_TOUCHED; \
+                    DB_DEBUG("\tclient_data->phone_number = %s", client_data->phone_number) \
                     break; \
                 default: \
                     err = DB_CLIENT_##action##_INVALID_COMMAND; \
+                    DB_DEBUG("\tclient_data invalid command DB_CLIENT_" #action "_INVALID_COMMAND(%d)", DB_CLIENT_##action##_INVALID_COMMAND) \
                     goto func##_exit1; \
             } \
         } \
@@ -128,9 +138,11 @@ func##_exit1: \
             client_data->flag = flag; \
         } \
 \
+        DB_DEBUG(#func ": ending with status %d", err) \
         return err; \
     } \
 \
+    DB_DEBUG(#func ": ending with error DB_CLIENT_" #action "_INVALID") \
     return DB_CLIENT_##action##_INVALID;
 
 

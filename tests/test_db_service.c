@@ -17,7 +17,7 @@ int test_connection()
   int err = db_service_init(
     &db_service,
     "host=localhost "
-    "dbname=estudos "
+    "dbname=solda_mvp "
     "user=fabio "
     "password=1234"
   );

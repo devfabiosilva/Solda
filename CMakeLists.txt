@@ -44,6 +44,7 @@ add_library(solda_core STATIC
     src/db_memory.c
     src/db_service.c
     src/db_log.c
+    src/db_messages.c
 )
 
 # TEST optional -DTEST=ON
