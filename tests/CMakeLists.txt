@@ -11,3 +11,9 @@ target_link_libraries(test_manipulator
     solda_asserts
 )
 add_test(NAME manipulator COMMAND test_manipulator)
+
+add_executable(test_dblog test_dblog.c)
+target_link_libraries(test_dblog
+    solda_core
+)
+add_test(NAME db_log COMMAND test_dblog)

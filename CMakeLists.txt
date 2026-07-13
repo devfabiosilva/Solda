@@ -30,7 +30,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3 -march=native)
     message(STATUS "Build: Release (-O3)")
 else()
-    add_compile_options(-O0 -g -DDB_DEBUG)
+    add_compile_options(-O0 -g -DSOLDA_DEBUG)
     message(STATUS "Build: Debug (-O0)")
 endif()
 
@@ -43,6 +43,7 @@ add_library(solda_core STATIC
     src/db_command.c
     src/db_memory.c
     src/db_service.c
+    src/db_log.c
 )
 
 # TEST optional -DTEST=ON

@@ -5,15 +5,21 @@
 #include <time.h>
 #include <tests/asserts.h>
 #include <stdlib.h>
+#include <db_errors.h>
 
 int test_add_manipulation();
+int test_add_invalid_manipulation();
 
 int main(int argc, char **argv)
 {
   (void)argc;
   (void)argv;
 
-  return test_add_manipulation();
+  int err = test_add_manipulation();
+  if (err)
+    return err;
+
+  return test_add_invalid_manipulation();
 }
 
 static void test_add_manipulation_destroy_on_failure(void *ctx)
@@ -567,6 +573,51 @@ test_add_manipulation_exit:
     printf("\n status %d\n", err);
     C_ASSERT_EQUAL_INT(0, err)
     TITLE_MSG("End test_add_manipulation ...")
+    end_tests();
+    return err;
+}
+
+int test_add_invalid_manipulation()
+{
+    TITLE_MSG("Begin test_add_invalid_manipulation ...")
+    TECHNICIAN_DATA_REQUESTS *technician_requests = NULL;
+    int err = technician_data_requests_init(&technician_requests);
+    if (err) {
+        printf("\ntest_add_invalid_manipulation: technician_data_requests_init error %d\n", err);
+        return err;
+    }
+
+    C_ASSERT_NOT_NULL(technician_requests)
+
+    size_t technician_index;
+    TECHNICIAN_DATA *technician_data = NULL;
+
+    if ((err = technician_acquire_technician_data_from_array(
+        &technician_index, &technician_data,
+        technician_requests
+    ))) goto test_add_invalid_manipulation_exit;
+
+    printf("\ntest_add_invalid_manipulation: technician_data index %d and pointer %p", (int)technician_index, technician_data);
+
+    err = technician_add(technician_data, 123456, "Wrong parameter", 0, NULL);
+
+    if (err == DB_TECHNICIAN_ADD_INVALID_COMMAND)
+      err = 0;
+    else {
+        C_ASSERT_FAIL(
+            CTEST_SETTER(
+                CTEST_TITLE("technician_add failed to check invalid command ..."),
+                CTEST_ON_ERROR_CB(test_add_manipulation_destroy_on_failure, (void *)&technician_requests),
+                CTEST_ON_ERROR("Failed. Was expected DB_TECHNICIAN_ADD_INVALID_COMMAND(%d) but found %d", DB_TECHNICIAN_ADD_INVALID_COMMAND, err)
+            )
+        )
+    }
+
+test_add_invalid_manipulation_exit:
+    printf("\nntest_add_invalid_manipulation: technician_requests pointer before free %p\n", technician_requests);
+    technician_data_requests_free(&technician_requests);
+    printf("\nntest_add_invalid_manipulation: technician_requests pointer after free %p\n", technician_requests);
+    TITLE_MSG("ntest_add_invalid_manipulation: End test_add_manipulation ...")
     end_tests();
     return err;
 }

@@ -9,6 +9,7 @@
     }
 
 #define TECHNICIAN_MANIPULATE_HELPER(func, action, text) \
+    DB_DEBUG(#func ": Access technician_data at %p", technician_data) \
     if (technician_data) { \
         TECHNICIAN_DATA_FLAG flag = technician_data->flag; \
         TECHNICIAN_DATA_TOUCHED touched = 0; \
@@ -27,21 +28,26 @@
                 case DB_TECHNICIAN_##action##_NAME_COMMAND: \
                     DB_COPY_STR_FROM(technician_data->name, (char *)p); \
                     touched |= TECHNICIAN_NAME_TOUCHED; \
+                    DB_DEBUG("\tAdded technician_data->name = %s", technician_data->name) \
                     break; \
                 case DB_TECHNICIAN_##action##_EMAIL_COMMAND: \
                     DB_COPY_STR_FROM(technician_data->email, (char *)p) \
                     touched |= TECHNICIAN_EMAIL_TOUCHED; \
+                    DB_DEBUG("\ttechnician_data->email = %s", technician_data->email) \
                     break; \
                 case DB_TECHNICIAN_##action##_PHONE_NUMBER_COMMAND: \
                     DB_COPY_STR_FROM(technician_data->phone_number, (char *)p) \
                     touched |= TECHNICIAN_PHONE_NUMBER_TOUCHED; \
+                    DB_DEBUG("\ttechnician_data->phone_number = %s", technician_data->phone_number) \
                     break; \
                 case DB_TECHNICIAN_##action##_RULES: \
                     technician_data->rules = (TECHNICIAN_RULES)((intptr_t)p); \
+                    DB_DEBUG("\ttechnician_data->rules = %d", technician_data->rules) \
                     touched |= TECHNICIAN_RULES_TOUCHED; \
                     break; \
                 default: \
                     err = DB_TECHNICIAN_##action##_INVALID_COMMAND; \
+                    DB_DEBUG("Error. Invalid command %d with error %d", command, err) \
                     goto func##_exit1; \
             } \
         } \
@@ -52,9 +58,11 @@ func##_exit1: \
             technician_data->touched = touched; \
             technician_data->flag = flag; \
         } \
-        return 0; \
+        DB_DEBUG(#func ": ending with status %d", err) \
+        return err; \
     } \
 \
+    DB_DEBUG(#func ": ending with error DB_TECHNICIAN_DATA_" #action "_INVALID") \
     return DB_TECHNICIAN_DATA_##action##_INVALID;
 
 #define CLIENT_DATA_MANIPULATE_HELPER(func, action, text) \
@@ -120,7 +128,7 @@ func##_exit1: \
             client_data->flag = flag; \
         } \
 \
-        return 0; \
+        return err; \
     } \
 \
     return DB_CLIENT_##action##_INVALID;
@@ -212,7 +220,7 @@ func##_exit1: \
             repair->touched = touched; \
             repair->flag = flag; \
         } \
-        return 0; \
+        return err; \
     } \
     return DB_REPAIR_##action##_INVALID;
 
@@ -273,7 +281,7 @@ func##_exit1: \
             service->touched = touched; \
             service->flag = flag; \
         }\
-        return 0; \
+        return err; \
     } \
     return DB_SERVICE_INVALID;
 
