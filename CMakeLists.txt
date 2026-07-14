@@ -4,15 +4,8 @@ set(CMAKE_C_STANDARD 11)
 
 #cmake -DCMAKE_BUILD_TYPE=Debug -DASAN=ON -DTEST=ON ..
 # compilation flags
-add_compile_options(
-    -Wall
-    -Wextra
-)
-
-add_link_options(
-    -lpq
-)
-
+#valgrind --leak-check=full --show-leak-kinds=all ./test_db_service
+#
 # ASAN optional -DASAN=ON
 option(ASAN "Enable AddressSanitizer" ON)
 if(ASAN AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -46,6 +39,12 @@ add_library(solda_core STATIC
     src/db_log.c
     src/db_messages.c
 )
+
+add_compile_options(
+    -Wall
+    -Wextra
+)
+
 
 # TEST optional -DTEST=ON
 option(TEST "Enable test" ON)

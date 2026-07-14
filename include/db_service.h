@@ -9,6 +9,10 @@
 typedef struct db_service_t {
   PGconn *conn;                                         // Postgres connection
   TECHNICIAN_DATA_REQUESTS *technician_data_requests;   // Manipulators for technician, clients, repair and services
+  TECHNICIAN_DATA *technician_data_list;                // Technician data list buffer. Array must be free
+  CLIENT_DATA *client_data_list;                        // Client data list. Array must be free
+  REPAIR *repair_list;                                  // Repair data list. Array must be free
+  SERVICE *service_list;                                // Service data list. Array must be free
   size_t message_len;
   char message[DB_MESSAGE_LEN + 1];
   int err;                                              // Error status
