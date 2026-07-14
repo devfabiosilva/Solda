@@ -5,19 +5,21 @@
 #include <string.h>
 #include <db_log.h>
 #include <db_messages.h>
+#include <arpa/inet.h>
 
-const char *QUERY_ALL_TECHNICIANS = "Query all technicians";
+const char *QUERY_ALL_TECHNICIANS = "QryAllTechs";
 
 static int _db_init_query(PGconn *conn)
 {
+    const Oid param_types[] = { 23, 23 }; 
     DB_DEBUG("Entering _db_init_query ...")
     DB_DEBUG("Preparing query \"%s\" ...", QUERY_ALL_TECHNICIANS)
     PGresult *res = PQprepare(
         conn, QUERY_ALL_TECHNICIANS,
         "select id, name, created_at, email, rules, version, phone_number from technician_data "
         "order by name "
-        "limit 10 offset 10",
-        2, NULL
+        "limit $1 offset $2",
+        2, param_types
     );
 
     DB_DEBUG("Check query \"%s\" ...", QUERY_ALL_TECHNICIANS)
@@ -119,11 +121,74 @@ void db_service_free(DB_SERVICE **db_service)
     }
 }
 
+#define DB_SERVICE_CHECK_CONN(error, message_prefix) \
+if (PQstatus(db_service->conn) != CONNECTION_OK) { \
+    set_db_service_error( \
+        db_service, \
+        error, \
+        message_prefix ". PostgreSQL connection is not active or is closed." \
+    ); \
+    DB_SERVICE_RETURN \
+}
+
 int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
 {
+    DB_DEBUG("Entering db_service_load_technicians ...")
     if (db_service) {
 
-        //TODO implement Postgres technician queries
+        uint32_t limit_be  = htonl((uint32_t)limit);
+        uint32_t offset_be = htonl((uint32_t)offset);
+
+        const char *param_values[] = { (const char *)&limit_be, (const char *)&offset_be };
+        int param_lengths[]        = { (int)sizeof(limit_be), (int)sizeof(offset_be) };
+        int param_formats[]        = { 1, 1 };
+
+        DB_DEBUG("db_service_load_technicians: Check PostgreSQL connection ...")
+        DB_SERVICE_CHECK_CONN(
+            DB_SERVICE_CLOSED_OR_OFFLINE_OR_NOT_AVAILABLE,
+            "Load technicians query failed"
+        )
+
+        DB_DEBUG("db_service_load_technicians: Execute query ...")
+        PGresult *res = PQexecPrepared(
+            db_service->conn,
+            QUERY_ALL_TECHNICIANS, 
+            2,
+            param_values,
+            param_lengths,
+            param_formats,
+            0 // 0 = string value as result
+        );
+        DB_DEBUG("db_service_load_technicians: Check results ...")
+        if (res) {
+            if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+                // SUCCESS
+                //TODO implement Postgres technician queries
+                int rows = PQntuples(res);
+                for (int i = 0; i < rows; i++) {
+                    // TESTING
+                    DB_DEBUG("List of name: %s", PQgetvalue(res, i, 1))
+                }
+            } else {
+                const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+                set_db_service_error(
+                    db_service,
+                    DB_QUERY_ALL_TECHNICIANS_EXECUTION_OUT_OF_MEMORY,
+                    "Execute load all technician query failed. SQL state: %s. Postgres message %s",
+                    ((sqlstate)?sqlstate:"None"),
+                    PQresultErrorMessage(res)
+                );
+            }
+
+            PQclear(res);
+        } else
+            set_db_service_error(
+                db_service,
+                DB_QUERY_ALL_TECHNICIANS_EXECUTION_OUT_OF_MEMORY,
+                "Error. Execute load all technician query failed. Out of memory"
+            );
+
+        DB_DEBUG("db_service_load_technicians: Query result status: %d", db_service->err)
         DB_SERVICE_RETURN
     }
 
@@ -133,5 +198,6 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
         "Null pointer for db_service. Unable to execute"
     );
 
+    DB_DEBUG("db_service_load_technicians: Invalid pointer")
     DB_SERVICE_RETURN
 }

@@ -1,4 +1,5 @@
 #include <db_service.h>
+#include <db_log.h>
 
 int test_connection();
 
@@ -22,6 +23,14 @@ int test_connection()
     "password=1234"
   );
 
+  if (err)
+    return err;
+
+  err = db_service_load_technicians(db_service, 10, 20);
+
+  if (err) {
+    DB_ERROR("db_service_load_technicians error: %d - %s", err, DB_MESSAGE(db_service))
+  }
   //TODO implement data access in PostgresSQL
   db_service_free(&db_service);
 
