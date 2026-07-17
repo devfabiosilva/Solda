@@ -3,6 +3,7 @@
 #include <db_errors.h>
 #include <db_memory.h>
 #include <string.h>
+#include <db_command.h>
 #include <db_log.h>
 #include <db_messages.h>
 #include <arpa/inet.h>
@@ -13,6 +14,37 @@ const char *QUERY_ALL_TECHNICIANS = "QryAllTechs";
 #define MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES (MAX_CLIENT_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->client_data_list))
 #define MAX_REPAIR_REQUESTS_LIMIT_BYTES (MAX_REPAIR_REQUESTS_LIMIT * sizeof(*(*db_service)->repair_list))
 #define MAX_SERVICE_REQUESTS_LIMIT_BYTES (MAX_SERVICE_REQUESTS_LIMIT * sizeof(*(*db_service)->service_list))
+
+static void _db_service_clear(DB_SERVICE *db_service)
+{
+    technician_data_requests_clear(db_service->technician_data_requests);
+
+    explicit_bzero((void *)db_service->technician_data_list, sizeof(*(db_service->technician_data_list)));
+    db_service->technician_data_list_index = -1;
+
+    explicit_bzero((void *)db_service->client_data_list, sizeof(*(db_service->client_data_list)));
+    db_service->client_data_list_index = -1;
+
+    explicit_bzero((void *)db_service->repair_list, sizeof(*(db_service->repair_list)));
+    db_service->repair_list_index = -1;
+
+    explicit_bzero((void *)db_service->service_list, sizeof(*(db_service->service_list)));
+    db_service->service_list_index = -1;
+}
+
+static int _db_add_technician(DB_SERVICE *db_service, TECHNICIAN_DATA *technician_data) {
+    if (db_service->technician_data_list_index > -1) {
+        if (MAX_TECHNICIAN_DATA_REQUESTS_LIMIT > db_service->technician_data_list_index)
+            db_service->technician_data_list[(size_t)(db_service->technician_data_list_index++)] = technician_data;
+        else
+            return DB_QUERY_ALL_TECHNICIAN_LIST_TECH_OVRFL;
+    } else {
+        db_service->technician_data_list[0] = technician_data;
+        db_service->technician_data_list_index = 1;
+    }
+
+    return 0;
+}
 
 static int _db_init_query(PGconn *conn)
 {
@@ -77,6 +109,7 @@ _Static_assert(sizeof(*(*db_service)) == sizeof(DB_SERVICE), "Invalid size");
                     DB_ERROR("Unable to allocate (*db_service)->technician_data_list. Aborting ...")
                     goto db_service_init_exit2;
                 }
+                (*db_service)->technician_data_list_index = -1;
                 DB_DEBUG("db_service_init. allocation (*db_service)->technician_data_list %p of size %zu bytes SUCCESS", (*db_service)->technician_data_list, MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES)
 
                 DB_DEBUG("db_service_init. Begin allocation (*db_service)->client_data_list ...")
@@ -85,6 +118,7 @@ _Static_assert(sizeof(*(*db_service)) == sizeof(DB_SERVICE), "Invalid size");
                     DB_ERROR("Unable to allocate (*db_service)->client_data_list. Aborting ...")
                     goto db_service_init_exit3;
                 }
+                (*db_service)->client_data_list_index = -1;
                 DB_DEBUG("db_service_init. allocation (*db_service)->client_data_list %p of size %zu bytes SUCCESS", (*db_service)->client_data_list, MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES)
 
                 DB_DEBUG("db_service_init. Begin allocation (*db_service)->repair_list ...")
@@ -93,6 +127,7 @@ _Static_assert(sizeof(*(*db_service)) == sizeof(DB_SERVICE), "Invalid size");
                     DB_ERROR("Unable to allocate (*db_service)->repair_list. Aborting ...")
                     goto db_service_init_exit4;
                 }
+                (*db_service)->repair_list_index = -1;
                 DB_DEBUG("db_service_init. allocation (*db_service)->repair_list %p of size %zu bytes SUCCESS", (*db_service)->repair_list, MAX_REPAIR_REQUESTS_LIMIT_BYTES)
 
                 DB_DEBUG("db_service_init. Begin allocation (*db_service)->service_list ...")
@@ -101,6 +136,7 @@ _Static_assert(sizeof(*(*db_service)) == sizeof(DB_SERVICE), "Invalid size");
                     DB_ERROR("Unable to allocate (*db_service)->service_list. Aborting ...")
                     goto db_service_init_exit5;
                 }
+                (*db_service)->service_list_index = -1;
                 DB_DEBUG("db_service_init. allocation (*db_service)->service_list %p of size %zu bytes SUCCESS", (*db_service)->service_list, MAX_SERVICE_REQUESTS_LIMIT_BYTES)
 
                 err = _db_init_query((*db_service)->conn);
@@ -246,16 +282,65 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
             if (PQresultStatus(res) == PGRES_TUPLES_OK) {
                 // SUCCESS
                 //TODO implement Postgres technician queries
+                DB_DEBUG("Cleaning all last requests ...")
+                _db_service_clear(db_service);
+
+                DB_DEBUG("Begin copy to allocated registries")
+
+                int err;
+                size_t index;
+                TECHNICIAN_DATA *out;
                 int rows = PQntuples(res);
+
                 for (int i = 0; i < rows; i++) {
-                    // TESTING
-                    DB_DEBUG("List of name: %s", PQgetvalue(res, i, 1))
+                    out = NULL;
+                    if ((err = technician_acquire_technician_data_from_array(&index, &out, db_service->technician_data_requests)) == 0) {
+                        // TESTING
+                        const char *name = PQgetvalue(res, i, 1);
+                        DB_DEBUG("List of name: %s", name);
+                        if ((err = _db_add_technician(db_service, out)) == 0) {
+                            err = TECHNICIAN_EXECUTE_ADD(
+                                out, 
+                                TECHNICIAN_ADD_NAME(name)
+                            )
+                            out->flag = TECHNICIAN_READ_FROM_DATABASE;
+                            if (err) {
+                                set_db_service_error(
+                                    db_service,
+                                    err,
+                                    "Fail TECHNICIAN_EXECUTE_ADD @ db_service_load_technicians: at index %d. Unable to add to temporary list",
+                                    i
+                                );
+                                _db_service_clear(db_service);
+                                break;
+                            }
+                        } else {
+                            set_db_service_error(
+                                db_service,
+                                err,
+                                "Fail _db_add_technician @ db_service_load_technicians: at index %d. Unable to add to temporary list",
+                                i
+                            );
+                            _db_service_clear(db_service);
+                            break;
+                        }
+                    } else {
+                        set_db_service_error(
+                            db_service,
+                            err,
+                            "Fail technician_acquire_technician_data_from_array @ db_service_load_technicians: at index %d",
+                            i
+                        );
+                        _db_service_clear(db_service);
+                        break;
+                    }
                 }
+                DB_DEBUG("Ende copy to allocated registries")
             } else {
                 const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
                 set_db_service_error(
                     db_service,
-                    DB_QUERY_ALL_TECHNICIANS_EXECUTION_OUT_OF_MEMORY,
+                    DB_QUERY_ALL_TECHNICIANS_EXECUTION_QUERY_ERROR,
                     "Execute load all technician query failed. SQL state: %s. Postgres message %s",
                     ((sqlstate)?sqlstate:"None"),
                     PQresultErrorMessage(res)

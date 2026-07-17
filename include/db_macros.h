@@ -31,29 +31,42 @@
 /* plus_n > 0 */ \
 static int func_name##_grow(type##_REQUESTS *requests, size_t plus_n) \
 { \
+    DB_DEBUG("Entering " #func_name "_grow...") \
     plus_n += requests->array_max_len; \
+    DB_DEBUG(#func_name "_grow: Added grow plus n = %zu", plus_n) \
 \
     DB_ALIGN_VEC_LENGTH(plus_n, MIN_##type##_REQUESTS_INITIAL) \
+    DB_DEBUG(#func_name "_grow: Aligned grow plus n = %zu", plus_n) \
 \
     if (MAX_##type##_REQUESTS_LIMIT >= plus_n) { \
             type *new = NULL, *current; \
 \
+        DB_DEBUG(#func_name "_grow: Check limit passed %zu >= %zu", MAX_##type##_REQUESTS_LIMIT, plus_n) \
+\
         if (db_alloc((void **)&new, plus_n * sizeof(type))) \
             return DB_UNABLE_TO_GROW_AND_MOVE_##type##_REQUESTS; \
 \
+        DB_DEBUG(#func_name "_grow: Alloc'd %p of size %zu", new, plus_n * sizeof(type)) \
+\
         current = requests->array; \
+\
+        DB_DEBUG(#func_name "_grow: Current pointer is %p ", current) \
 \
         memcpy((void *)new, (void *)current, requests->n * sizeof(*new)); \
 \
+        DB_DEBUG(#func_name "_grow: Copied all. Reseting current pointer %p of size %zu", current, requests->array_max_len * sizeof(*current)) \
         explicit_bzero((void *)current, requests->array_max_len * sizeof(*current)); \
+        DB_DEBUG(#func_name "_grow: Destroying pointer %p ...", current) \
         free((void *)current); \
 \
         requests->array = new; \
         requests->array_max_len = plus_n; \
 \
+        DB_DEBUG(#func_name "_grow: Exit success with status 0") \
         return 0; \
     } \
 \
+    DB_DEBUG(#func_name "_grow: Error success with status DB_UNABLE_TO_GROW_" #type "__REQUESTS") \
     return DB_UNABLE_TO_GROW_##type##_REQUESTS; \
 }
 

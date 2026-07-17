@@ -4,6 +4,7 @@
 #include <db_memory.h>
 #include <db_errors.h>
 #include <db_macros.h>
+#include <db_log.h>
 
 inline void service_request_clear(SERVICE *service_request)
 {
@@ -190,6 +191,7 @@ GROW_ARRAY_FUNC(technician_data_requests, TECHNICIAN_DATA)
 int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA **out, TECHNICIAN_DATA_REQUESTS *in)
 {
     int err = 0;
+    DB_DEBUG("Entering technician_acquire_technician_data_from_array ...")
     if ((index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL)) {
         *out = NULL;
         *index = 0;
@@ -203,8 +205,10 @@ int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA
 
             *index = in->n;
             *out = &(in->array[in->n++]);
+            DB_DEBUG("technician_acquire_technician_data_from_array: Adding next index %zu in alloc'd array %p", in->n, in->array)
 
         } else if (db_alloc((void **)&(in->array), MIN_TECHNICIAN_DATA_REQUESTS_INITIAL * sizeof(*(in->array))) == 0) {
+            DB_DEBUG("Initialized array in technician_acquire_technician_data_from_array %p of size %zu", (void *)in->array, MIN_TECHNICIAN_DATA_REQUESTS_INITIAL * sizeof(*(in->array)))
             in->array_max_len = MIN_TECHNICIAN_DATA_REQUESTS_INITIAL; 
             *index = 0;
             in->n = 1;
@@ -215,6 +219,7 @@ int technician_acquire_technician_data_from_array(size_t *index, TECHNICIAN_DATA
     } else
         err = DB_UNABLE_TO_ACQUIRE_TECHNICIAN_DATA_FROM_ARRAY;
 
+    DB_DEBUG("Exiting technician_acquire_technician_data_from_array with status code %d", err)
     return err;
 }
 
