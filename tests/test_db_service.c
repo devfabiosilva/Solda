@@ -26,7 +26,7 @@ int test_connection()
   if (err)
     return err;
 
-  err = db_service_load_technicians(db_service, 35, 50);
+  err = db_service_load_technicians(db_service, 50, 1);
 
   if (err) {
     DB_ERROR("db_service_load_technicians error: %d - %s", err, DB_MESSAGE(db_service))

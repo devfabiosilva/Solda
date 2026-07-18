@@ -7,6 +7,7 @@
 #include <db_log.h>
 #include <db_messages.h>
 #include <arpa/inet.h>
+#include <endian.h>
 
 const char *QUERY_ALL_TECHNICIANS = "QryAllTechs";
 
@@ -249,6 +250,32 @@ if (PQstatus(db_service->conn) != CONNECTION_OK) { \
     DB_SERVICE_RETURN \
 }
 
+time_t _get_pg_time(PGresult *res, int row, int col)
+{
+    int64_t ret;
+    if (!PQgetisnull(res, row, col)) {
+        memcpy(&ret, PQgetvalue(res, row, col), sizeof(ret));
+        ret = be64toh(ret); // BE to LE
+        ret /= 1000000LL; // Convert microsseconds to seconds ...
+        ret += 946684800LL; // Add 30 Years in seconds (postgres initial timestamp 2000)
+        if (ret > 0)
+            return ret;
+    }
+
+    return 0;
+}
+
+int32_t _get_pg_id(PGresult *res, int row, int col)
+{
+    int32_t ret;
+    if (!PQgetisnull(res, row, col)) {
+        memcpy(&ret, PQgetvalue(res, row, col), sizeof(ret));
+        return (int32_t)ntohl(ret);
+    }
+
+    return -1;
+}
+
 int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
 {
     DB_DEBUG("Entering db_service_load_technicians ...")
@@ -275,7 +302,7 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
             param_values,
             param_lengths,
             param_formats,
-            0 // 0 = string value as result
+            1 // 0 = string value as result | 1 = for binary
         );
         DB_DEBUG("db_service_load_technicians: Check results ...")
         if (res) {
@@ -296,11 +323,23 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
                     out = NULL;
                     if ((err = technician_acquire_technician_data_from_array(&index, &out, db_service->technician_data_requests)) == 0) {
                         // TESTING
+//"id, name, created_at, email, rules, version, phone_number from technician_data "
+                        int32_t id = _get_pg_id(res, i, 0);
+                        //ntohl(*(uint32_t *)PQgetvalue(res, i, 0));
                         const char *name = PQgetvalue(res, i, 1);
-                        DB_DEBUG("List of name: %s", name);
+                        char buffer[64];
+
+                        time_t created_at = _get_pg_time(res, i, 2);
+                        struct tm *time_utc = gmtime(&created_at);
+                        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S UTC", time_utc);
+
+                        DB_DEBUG("HORA: %s %zu", buffer, (size_t)created_at)
+                        DB_DEBUG("Technician ID: %u", id)
+                        DB_DEBUG("List of name: %s", name)
                         if ((err = _db_add_technician(db_service, out)) == 0) {
                             err = TECHNICIAN_EXECUTE_ADD(
                                 out, 
+                                TECHNICIAN_ADD_ID(id),
                                 TECHNICIAN_ADD_NAME(name)
                             )
                             out->flag = TECHNICIAN_READ_FROM_DATABASE;

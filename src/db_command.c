@@ -4,6 +4,7 @@
 #include <string.h>
 #include <db_command_macros.h>
 #include <db_log.h>
+#include <sys/types.h>
 
 int technician_add(TECHNICIAN_DATA *technician_data, ...)
 {

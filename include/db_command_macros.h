@@ -25,6 +25,17 @@
         while ((command = (DB_##action##_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) { \
             p = (void *)va_arg(args, void *); \
             switch (command) { \
+                case DB_TECHNICIAN_##action##_ID_COMMAND: \
+                    ssize_t id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((id_as_ssize_t <= (ssize_t)INT32_MAX) && (id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        technician_data->id = (int32_t)id_as_ssize_t; \
+                        touched |= TECHNICIAN_ID_TOUCHED; \
+                        DB_DEBUG("\ttechnician_data->id = %d", technician_data->id) \
+                        break; \
+                    } \
+                    DB_DEBUG("\ttechnician_data->id limit reached DB_TECHNICIAN_" #action "_ID_LIMIT_REACHED(%d)", DB_TECHNICIAN_##action##_ID_LIMIT_REACHED) \
+                    err = DB_TECHNICIAN_##action##_ID_LIMIT_REACHED; \
+                    goto func##_exit1; \
                 case DB_TECHNICIAN_##action##_NAME_COMMAND: \
                     DB_COPY_STR_FROM(technician_data->name, (char *)p); \
                     touched |= TECHNICIAN_NAME_TOUCHED; \
@@ -83,14 +94,14 @@ func##_exit1: \
             p = (void *)va_arg(args, void *); \
             switch (command) { \
                 case DB_CLIENT_##action##_TECHNICIAN_ID_COMMAND: \
-                    size_t id_as_size_t = (size_t)((intptr_t)p); \
-                    if (id_as_size_t <= INT32_MAX) { \
-                        client_data->technician_id = (int32_t)id_as_size_t; \
+                    ssize_t id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((id_as_ssize_t <= (ssize_t)INT32_MAX) && (id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        client_data->technician_id = (int32_t)id_as_ssize_t; \
                         touched |= CLIENT_TECHNICIAN_ID_COMMAND_TOUCHED; \
-                        DB_DEBUG("\tclient_data->id = %d", client_data->id) \
+                        DB_DEBUG("\tclient_data->technician_id = %d", client_data->technician_id) \
                         break; \
                     } \
-                    DB_DEBUG("\tclient_data limit reached DB_CLIENT_" #action "_TECHNICIAN_ID_LIMIT_REACHED(%d)", DB_CLIENT_##action##_TECHNICIAN_ID_LIMIT_REACHED) \
+                    DB_DEBUG("\tclient_data->technician_id limit reached DB_CLIENT_" #action "_TECHNICIAN_ID_LIMIT_REACHED(%d)", DB_CLIENT_##action##_TECHNICIAN_ID_LIMIT_REACHED) \
                     err = DB_CLIENT_##action##_TECHNICIAN_ID_LIMIT_REACHED; \
                     goto func##_exit1; \
                 case DB_CLIENT_##action##_CPF_COMMAND: \
@@ -163,9 +174,9 @@ func##_exit1: \
             p = (void *)va_arg(args, void *); \
             switch (command) { \
                 case DB_REPAIR_##action##_CLIENT_ID: \
-                    size_t id_as_size_t = (size_t)((intptr_t)p); \
-                    if (id_as_size_t <= INT32_MAX) { \
-                        repair->client_id = (int32_t)id_as_size_t; \
+                    ssize_t id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((id_as_ssize_t <= (ssize_t)INT32_MAX) && (id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        repair->client_id = (int32_t)id_as_ssize_t; \
                         touched |= REPAIR_CLIENT_ID_COMMAND_TOUCHED; \
                         break; \
                     } \
@@ -251,9 +262,9 @@ func##_exit1: \
             p = (void *)va_arg(args, void *); \
             switch (command) { \
                 case DB_SERVICE_##action##_REPAIR_REQUEST_ID: \
-                    size_t id_as_size_t = (size_t)((intptr_t)p); \
-                    if (id_as_size_t <= INT32_MAX) { \
-                        service->repair_request_id = (int32_t)id_as_size_t; \
+                    ssize_t id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((id_as_ssize_t <= (ssize_t)INT32_MAX) && (id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        service->repair_request_id = (int32_t)id_as_ssize_t; \
                         touched |= SERVICE_REPAIR_REQUEST_ID; \
                         break; \
                     } \
