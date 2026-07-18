@@ -9,6 +9,10 @@
 #include <arpa/inet.h>
 #include <endian.h>
 
+#ifdef SOLDA_DEBUG
+    #include <db_time.h>
+#endif
+
 const char *QUERY_ALL_TECHNICIANS = "QryAllTechs";
 
 #define MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES (MAX_TECHNICIAN_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->technician_data_list))
@@ -265,7 +269,7 @@ time_t _get_pg_time(PGresult *res, int row, int col)
     return 0;
 }
 
-int32_t _get_pg_id(PGresult *res, int row, int col)
+int32_t _get_pg_i32(PGresult *res, int row, int col)
 {
     int32_t ret;
     if (!PQgetisnull(res, row, col)) {
@@ -308,7 +312,6 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
         if (res) {
             if (PQresultStatus(res) == PGRES_TUPLES_OK) {
                 // SUCCESS
-                //TODO implement Postgres technician queries
                 DB_DEBUG("Cleaning all last requests ...")
                 _db_service_clear(db_service);
 
@@ -322,25 +325,34 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
                 for (int i = 0; i < rows; i++) {
                     out = NULL;
                     if ((err = technician_acquire_technician_data_from_array(&index, &out, db_service->technician_data_requests)) == 0) {
-                        // TESTING
-//"id, name, created_at, email, rules, version, phone_number from technician_data "
-                        int32_t id = _get_pg_id(res, i, 0);
-                        //ntohl(*(uint32_t *)PQgetvalue(res, i, 0));
+                        //id, name, created_at, email, rules, version,
+                        //phone_number from technician_data
+                        
+                        int32_t id = _get_pg_i32(res, i, 0);
                         const char *name = PQgetvalue(res, i, 1);
-                        char buffer[64];
-
                         time_t created_at = _get_pg_time(res, i, 2);
-                        struct tm *time_utc = gmtime(&created_at);
-                        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S UTC", time_utc);
-
-                        DB_DEBUG("HORA: %s %zu", buffer, (size_t)created_at)
+                        const char *email = PQgetvalue(res, i, 3);
+                        int32_t rules = _get_pg_i32(res, i, 4);
+                        int32_t version = _get_pg_i32(res, i, 5);
+                        const char *phone_number = PQgetvalue(res, i, 6);
+#ifdef SOLDA_DEBUG
+                        char buffer[64];
+                        DB_DEBUG("Created at: %s", db_time(&buffer[0], sizeof(buffer), &created_at))
+#endif
                         DB_DEBUG("Technician ID: %u", id)
-                        DB_DEBUG("List of name: %s", name)
+                        DB_DEBUG("Technician name: %s", name)
+                        DB_DEBUG("Technician email: %s", email)
+                        DB_DEBUG("Technician rules: %d", rules)
+                        DB_DEBUG("Technician version: %d", version)
                         if ((err = _db_add_technician(db_service, out)) == 0) {
                             err = TECHNICIAN_EXECUTE_ADD(
                                 out, 
                                 TECHNICIAN_ADD_ID(id),
-                                TECHNICIAN_ADD_NAME(name)
+                                TECHNICIAN_ADD_NAME(name),
+                                TECHNICIAN_ADD_CREATED_AT(created_at),
+                                TECHNICIAN_ADD_EMAIL(email),
+                                TECHNICIAN_ADD_RULES(rules),
+                                TECHNICIAN_ADD_VERSION(version)
                             )
                             out->flag = TECHNICIAN_READ_FROM_DATABASE;
                             if (err) {
@@ -374,7 +386,7 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
                         break;
                     }
                 }
-                DB_DEBUG("Ende copy to allocated registries")
+                DB_DEBUG("Ending copying to allocated registries")
             } else {
                 const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
                 set_db_service_error(

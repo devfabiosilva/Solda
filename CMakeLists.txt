@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD 11)
 #valgrind --leak-check=full --show-leak-kinds=all ./test_db_service
 #
 # ASAN optional -DASAN=ON
-option(ASAN "Enable AddressSanitizer" ON)
+option(ASAN "Enable AddressSanitizer" OFF)
 if(ASAN AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-fsanitize=address,leak)
     add_link_options(-fsanitize=address,leak)
@@ -38,6 +38,7 @@ add_library(solda_core STATIC
     src/db_service.c
     src/db_log.c
     src/db_messages.c
+    src/db_time.c
 )
 
 add_compile_options(

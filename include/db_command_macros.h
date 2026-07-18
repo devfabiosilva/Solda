@@ -41,6 +41,16 @@
                     touched |= TECHNICIAN_NAME_TOUCHED; \
                     DB_DEBUG("\tAdded technician_data->name = %s", technician_data->name) \
                     break; \
+                case DB_TECHNICIAN_##action##_CREATED_AT: \
+                    technician_data->created_at = (time_t)((intptr_t)p); \
+                    touched |= TECHNICIAN_CREATED_AT_TOUCHED; \
+                    DB_DEBUG("\tAdded technician_data->created_at = %zu", (size_t)technician_data->created_at) \
+                    break; \
+                case DB_TECHNICIAN_##action##_VERSION: \
+                    technician_data->version = (int32_t)((intptr_t)p); \
+                    touched |= TECHNICIAN_VERSION_TOUCHED; \
+                    DB_DEBUG("\tAdded technician_data->version = %d", technician_data->version) \
+                    break; \
                 case DB_TECHNICIAN_##action##_EMAIL_COMMAND: \
                     DB_COPY_STR_FROM(technician_data->email, (char *)p) \
                     touched |= TECHNICIAN_EMAIL_TOUCHED; \
