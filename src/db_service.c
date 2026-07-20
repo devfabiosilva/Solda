@@ -7,13 +7,19 @@
 #include <db_log.h>
 #include <db_messages.h>
 #include <arpa/inet.h>
+#include <db_service_macros.h>
 #include <endian.h>
 
 #ifdef SOLDA_DEBUG
     #include <db_time.h>
 #endif
 
+extern int _db_alloc_align(void **, size_t);
+
+#define DB_EMPTY_JSON_ARRAY "[]"
+#define DB_EMPTY_JSON_ARRAY_LEN (sizeof(DB_EMPTY_JSON_ARRAY) - 1)
 const char *QUERY_ALL_TECHNICIANS = "QryAllTechs";
+const char *QUERY_ALL_TECHNICIANS_JSON = "QryAllTechsJson";
 
 #define MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES (MAX_TECHNICIAN_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->technician_data_list))
 #define MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES (MAX_CLIENT_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->client_data_list))
@@ -53,30 +59,29 @@ static int _db_add_technician(DB_SERVICE *db_service, TECHNICIAN_DATA *technicia
 
 static int _db_init_query(PGconn *conn)
 {
-    const Oid param_types[] = { 23, 23 }; 
-    DB_DEBUG("Entering _db_init_query ...")
-    DB_DEBUG("Preparing query \"%s\" ...", QUERY_ALL_TECHNICIANS)
-    PGresult *res = PQprepare(
-        conn, QUERY_ALL_TECHNICIANS,
+    const Oid query_all_technicians_param[] = {23, 23};
+
+    DB_BUILD_SQL_BEGIN
+
+    DB_BUILD_SQL(
+        QUERY_ALL_TECHNICIANS,
         "select id, name, created_at, email, rules, version, phone_number from technician_data "
         "order by name "
         "limit $1 offset $2",
-        2, param_types
-    );
+        query_all_technicians_param
+    )
 
-    DB_DEBUG("Check query \"%s\" ...", QUERY_ALL_TECHNICIANS)
-    int err = 0;
-    if (res) {
-        if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-            DB_ERROR("_db_init_query: PQresultStatus returned error for query QUERY_ALL_TECHNICIANS with message: %s", PQresultErrorMessage(res))
-            err = DB_QUERY_ALL_TECHNICIANS_FAILED;
-        }
-        PQclear(res);
-    } else
-        err = DB_SERVICE_PREPARE_QUERY_ALL_TECHNICIAN_DATA_OUT_OF_MEMORY;
+    DB_BUILD_SQL(
+        QUERY_ALL_TECHNICIANS_JSON,
+        "SELECT json_agg(t) FROM ("
+            "select id, name, created_at, email, rules, version, phone_number from technician_data "
+            "order by name "
+            "limit $1 offset $2 "
+        ") t",
+        query_all_technicians_param
+    )
 
-    DB_DEBUG("_db_init_query status: %d ...", err)
-    return err;
+    DB_BUILD_SQL_END
 }
 
 int db_service_init(DB_SERVICE **db_service, char *connection)
@@ -244,16 +249,6 @@ void db_service_free(DB_SERVICE **db_service)
     }
 }
 
-#define DB_SERVICE_CHECK_CONN(error, message_prefix) \
-if (PQstatus(db_service->conn) != CONNECTION_OK) { \
-    set_db_service_error( \
-        db_service, \
-        error, \
-        message_prefix ". PostgreSQL connection is not active or is closed." \
-    ); \
-    DB_SERVICE_RETURN \
-}
-
 time_t _get_pg_time(PGresult *res, int row, int col)
 {
     int64_t ret;
@@ -278,6 +273,120 @@ int32_t _get_pg_i32(PGresult *res, int row, int col)
     }
 
     return -1;
+}
+
+/*
+SELECT json_agg(t) FROM (
+    select id, name, created_at, email, rules, version, phone_number from technician_data
+    order by name
+    limit $1 offset $2
+) t;
+*/
+int db_service_load_technicians_json(char **json_result, size_t *json_result_len, DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
+{
+    if(db_service) {
+        if ((json_result != NULL) && (*json_result == NULL)) {
+            if (json_result_len)
+                *json_result_len = 0;
+
+            uint32_t limit_be  = htonl((uint32_t)limit);
+            uint32_t offset_be = htonl((uint32_t)offset);
+
+            const char *param_values[] = { (const char *)&limit_be, (const char *)&offset_be };
+            int param_lengths[]        = { (int)sizeof(limit_be), (int)sizeof(offset_be) };
+            int param_formats[]        = { 1, 1 };
+
+            DB_DEBUG("db_service_load_technicians_json: Check PostgreSQL connection ...")
+            DB_SERVICE_CHECK_CONN(
+                DB_SERVICE_CLOSED_OR_OFFLINE_OR_NOT_AVAILABLE,
+                "Load technicians query as JSON failed"
+            )
+
+            DB_DEBUG("db_service_load_technicians_json: Execute query ...")
+            PGresult *res = PQexecPrepared(
+                db_service->conn,
+                QUERY_ALL_TECHNICIANS_JSON, 
+                2,
+                param_values,
+                param_lengths,
+                param_formats,
+                0 // 0 = string value as result | 1 = for binary
+            );
+            DB_DEBUG("db_service_load_technicians_json: Check results ...")
+
+            if (res) {
+                if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+                    const char *json_string = DB_EMPTY_JSON_ARRAY;
+                    int json_len_tmp = (int)DB_EMPTY_JSON_ARRAY_LEN;
+
+                    if (!PQgetisnull(res, 0, 0)) {
+                        // SUCCESS
+                        DB_DEBUG("db_service_load_technicians_json: Cleaning all last requests ...")
+
+                        _db_service_clear(db_service);
+
+                        json_string = PQgetvalue(res, 0, 0);
+                        json_len_tmp = PQgetlength(res, 0, 0);
+                        DB_DEBUG("db_service_load_technicians_json: Begin JSON string parsing at pointer %p of size %d\n", json_string, json_len_tmp)
+
+                        if (json_len_tmp <= 0) {
+                            json_string = DB_EMPTY_JSON_ARRAY;
+                            json_len_tmp = DB_EMPTY_JSON_ARRAY_LEN;
+                        }
+
+                        DB_DEBUG("db_service_load_technicians_json: Begin allocation of new %d bytes to copy Postgres result", json_len_tmp + 1)
+                        int err = _db_alloc_align((void **)json_result, (size_t)(json_len_tmp + 1));
+
+                        if (err == 0) {
+                            memcpy((void *)*json_result, (void *)json_string, (size_t)json_len_tmp);
+                            (*json_result)[(size_t)json_len_tmp] = 0;
+
+                            if (json_len_tmp)
+                                *json_result_len = (size_t)json_len_tmp;
+
+                            DB_DEBUG("db_service_load_technicians_json: Postgres copy %d bytes of JSON success from %p to %p", json_len_tmp, json_string, *json_result)
+                        } else {
+                            DB_ERROR("db_service_load_technicians_json: Unexpected _db_alloc_align error %d", err)
+                            set_db_service_error(
+                                db_service,
+                                DB_QUERY_ALL_TECHNICIANS_JSON_ALLOCATION_COPY_BLOCK,
+                                "JSON Postgres copy allocation error %d", err
+                            );        
+                        }
+                    }
+                } else {
+                    const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+                    set_db_service_error(
+                        db_service,
+                        DB_QUERY_ALL_TECHNICIANS_EXECUTION_JSON_QUERY_ERROR,
+                        "Execute load all technician query as JSON failed. SQL state: %s. Postgres message %s",
+                        ((sqlstate)?sqlstate:"None"),
+                        PQresultErrorMessage(res)
+                    );
+                }
+
+                PQclear(res);
+            } else
+                set_db_service_error(
+                    db_service,
+                    DB_QUERY_ALL_TECHNICIANS_JSON_EXECUTION_OUT_OF_MEMORY,
+                    "Error. Execute load all technician query as JSON failed. Out of memory"
+                );
+        } else {
+            set_db_service_error(
+                db_service,
+                DB_QUERY_ALL_TECHNICIANS_JSON_INVALID_JSON_POINTER,
+                "Invalid JSON pointer"
+            );
+        }
+
+        DB_DEBUG("db_service_load_technicians_json: Query result status: %d", db_service->err)
+        DB_SERVICE_RETURN
+    }
+
+    DB_ERROR("db_service_load_technicians_json: Null pointer")
+    DB_DEBUG("db_service_load_technicians_json: Invalid pointer")
+    DB_SERVICE_RETURN
 }
 
 int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
@@ -410,12 +519,7 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
         DB_SERVICE_RETURN
     }
 
-    set_db_service_error(
-        db_service,
-        DB_SERVICE_UNABLE_TO_RETRIEVE_TECHNICIANS_REQUESTS,
-        "Null pointer for db_service. Unable to execute"
-    );
-
+    DB_ERROR("db_service_load_technicians: Null pointer")
     DB_DEBUG("db_service_load_technicians: Invalid pointer")
     DB_SERVICE_RETURN
 }

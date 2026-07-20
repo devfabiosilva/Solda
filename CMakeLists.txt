@@ -7,7 +7,7 @@ set(CMAKE_C_STANDARD 11)
 #valgrind --leak-check=full --show-leak-kinds=all ./test_db_service
 #
 # ASAN optional -DASAN=ON
-option(ASAN "Enable AddressSanitizer" OFF)
+option(ASAN "Enable AddressSanitizer" ON)
 if(ASAN AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-fsanitize=address,leak)
     add_link_options(-fsanitize=address,leak)

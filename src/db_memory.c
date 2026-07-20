@@ -4,6 +4,10 @@
 #include <db_errors.h>
 #include <db_log.h>
 
+int _db_alloc_align(void **mem, size_t mem_size)
+{
+    return posix_memalign(mem, 64, mem_size);
+}
 
 int db_alloc(void **mem, size_t mem_size)
 {
