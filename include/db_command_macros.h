@@ -103,10 +103,32 @@ func##_exit1: \
         while ((command = (DB_##action##_ENUM_COMMAND)va_arg(args, DB_##action##_ENUM_COMMAND))) { \
             p = (void *)va_arg(args, void *); \
             switch (command) { \
-                case DB_CLIENT_##action##_TECHNICIAN_ID_COMMAND: \
+                case DB_CLIENT_##action##_VERSION_COMMAND: \
+                    ssize_t version_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((version_as_ssize_t <= (ssize_t)INT32_MAX) && (version_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        client_data->version = (int32_t)version_as_ssize_t; \
+                        touched |= CLIENT_VERSION_COMMAND_TOUCHED; \
+                        DB_DEBUG("\tclient_data->version = %d", client_data->version) \
+                        break; \
+                    } \
+                    DB_DEBUG("\tclient_data->version limit reached DB_CLIENT_" #action "_VERSION_LIMIT_REACHED(%d)", DB_CLIENT_##action##_VERSION_LIMIT_REACHED) \
+                    err = DB_CLIENT_##action##_VERSION_LIMIT_REACHED; \
+                    goto func##_exit1; \                
+                case DB_CLIENT_##action##_ID_COMMAND: \
                     ssize_t id_as_ssize_t = (ssize_t)((intptr_t)p); \
                     if ((id_as_ssize_t <= (ssize_t)INT32_MAX) && (id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
-                        client_data->technician_id = (int32_t)id_as_ssize_t; \
+                        client_data->id = (int32_t)id_as_ssize_t; \
+                        touched |= CLIENT_ID_COMMAND_TOUCHED; \
+                        DB_DEBUG("\tclient_data->id = %d", client_data->id) \
+                        break; \
+                    } \
+                    DB_DEBUG("\tclient_data->id limit reached DB_CLIENT_" #action "_ID_LIMIT_REACHED(%d)", DB_CLIENT_##action##_ID_LIMIT_REACHED) \
+                    err = DB_CLIENT_##action##_ID_LIMIT_REACHED; \
+                    goto func##_exit1; \
+                case DB_CLIENT_##action##_TECHNICIAN_ID_COMMAND: \
+                    ssize_t technician_id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((technician_id_as_ssize_t <= (ssize_t)INT32_MAX) && (technician_id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        client_data->technician_id = (int32_t)technician_id_as_ssize_t; \
                         touched |= CLIENT_TECHNICIAN_ID_COMMAND_TOUCHED; \
                         DB_DEBUG("\tclient_data->technician_id = %d", client_data->technician_id) \
                         break; \
@@ -114,6 +136,11 @@ func##_exit1: \
                     DB_DEBUG("\tclient_data->technician_id limit reached DB_CLIENT_" #action "_TECHNICIAN_ID_LIMIT_REACHED(%d)", DB_CLIENT_##action##_TECHNICIAN_ID_LIMIT_REACHED) \
                     err = DB_CLIENT_##action##_TECHNICIAN_ID_LIMIT_REACHED; \
                     goto func##_exit1; \
+                case DB_CLIENT_##action##_CREATED_AT_COMMAND: \
+                    client_data->created_at = (time_t)((intptr_t)p); \
+                    touched |= CLIENT_CREATED_AT_COMMAND_TOUCHED; \
+                    DB_DEBUG("\tAdded client_data->created_at = %zu", (size_t)client_data->created_at) \
+                    break; \
                 case DB_CLIENT_##action##_CPF_COMMAND: \
                     DB_COPY_STR_FROM(client_data->cpf, (char *)p) \
                     touched |= CLIENT_CPF_COMMAND_TOUCHED; \
@@ -146,7 +173,7 @@ func##_exit1: \
                     break; \
                 default: \
                     err = DB_CLIENT_##action##_INVALID_COMMAND; \
-                    DB_DEBUG("\tclient_data invalid command DB_CLIENT_" #action "_INVALID_COMMAND(%d)", DB_CLIENT_##action##_INVALID_COMMAND) \
+                    DB_DEBUG("\tclient_data invalid command DB_CLIENT_" #action "_INVALID_COMMAND(%d). Command: %d", DB_CLIENT_##action##_INVALID_COMMAND, command) \
                     goto func##_exit1; \
             } \
         } \

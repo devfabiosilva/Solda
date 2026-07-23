@@ -20,6 +20,8 @@ extern int _db_alloc_align(void **, size_t);
 #define DB_EMPTY_JSON_ARRAY_LEN (sizeof(DB_EMPTY_JSON_ARRAY) - 1)
 const char *QUERY_ALL_TECHNICIANS = "QryAllTechs";
 const char *QUERY_ALL_TECHNICIANS_JSON = "QryAllTechsJson";
+const char *QUERY_ALL_CLIENTS = "QryAllClients";
+const char *QUERY_ALL_CLIENTS_JSON = "QryAllClientsJson";
 
 #define MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES (MAX_TECHNICIAN_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->technician_data_list))
 #define MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES (MAX_CLIENT_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->client_data_list))
@@ -57,9 +59,24 @@ static int _db_add_technician(DB_SERVICE *db_service, TECHNICIAN_DATA *technicia
     return 0;
 }
 
+static int _db_add_client(DB_SERVICE *db_service, CLIENT_DATA *client_data) {
+    if (db_service->client_data_list_index > -1) {
+        if (MAX_CLIENT_DATA_REQUESTS_LIMIT > db_service->client_data_list_index)
+            db_service->client_data_list[(size_t)(db_service->client_data_list_index++)] = client_data;
+        else
+            return DB_QUERY_ALL_CLIENT_LIST_TECH_OVRFL;
+    } else {
+        db_service->client_data_list[0] = client_data;
+        db_service->client_data_list_index = 1;
+    }
+
+    return 0;
+}
+
+
 static int _db_init_query(PGconn *conn)
 {
-    const Oid query_all_technicians_param[] = {23, 23};
+    const Oid query_limit_offset[] = {23, 23};
 
     DB_BUILD_SQL_BEGIN
 
@@ -68,7 +85,7 @@ static int _db_init_query(PGconn *conn)
         "select id, name, created_at, email, rules, version, phone_number from technician_data "
         "order by name "
         "limit $1 offset $2",
-        query_all_technicians_param
+        query_limit_offset
     )
 
     DB_BUILD_SQL(
@@ -78,7 +95,25 @@ static int _db_init_query(PGconn *conn)
             "order by name "
             "limit $1 offset $2 "
         ") t",
-        query_all_technicians_param
+        query_limit_offset
+    )
+
+    DB_BUILD_SQL(
+        QUERY_ALL_CLIENTS,
+        "select id, technician_id, created_at, cpf, name, address, district_city, email, phone_number, version from client_data "
+        "order by name "
+        "limit $1 offset $2 ",
+        query_limit_offset
+    )
+
+    DB_BUILD_SQL(
+        QUERY_ALL_CLIENTS_JSON,
+        "SELECT json_agg(c) FROM ("
+            "select id, technician_id, created_at, cpf, name, address, district_city, email, phone_number, version from client_data "
+            "order by name "
+            "limit $1 offset $2 "
+        ") c",
+        query_limit_offset
     )
 
     DB_BUILD_SQL_END
@@ -275,13 +310,6 @@ int32_t _get_pg_i32(PGresult *res, int row, int col)
     return -1;
 }
 
-/*
-SELECT json_agg(t) FROM (
-    select id, name, created_at, email, rules, version, phone_number from technician_data
-    order by name
-    limit $1 offset $2
-) t;
-*/
 int db_service_load_technicians_json(char **json_result, size_t *json_result_len, DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
 {
     if(db_service) {
@@ -521,5 +549,271 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
 
     DB_ERROR("db_service_load_technicians: Null pointer")
     DB_DEBUG("db_service_load_technicians: Invalid pointer")
+    DB_SERVICE_RETURN
+}
+
+int db_service_load_clients(DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
+{
+    DB_DEBUG("Entering db_service_load_clients ...")
+    if (db_service) {
+
+        uint32_t limit_be  = htonl((uint32_t)limit);
+        uint32_t offset_be = htonl((uint32_t)offset);
+
+        const char *param_values[] = { (const char *)&limit_be, (const char *)&offset_be };
+        int param_lengths[]        = { (int)sizeof(limit_be), (int)sizeof(offset_be) };
+        int param_formats[]        = { 1, 1 };
+
+        DB_DEBUG("db_service_load_clients: Check PostgreSQL connection ...")
+        DB_SERVICE_CHECK_CONN(
+            DB_SERVICE_CLOSED_OR_OFFLINE_OR_NOT_AVAILABLE,
+            "Load clients query failed"
+        )
+
+        DB_DEBUG("db_service_load_clients: Execute query ...")
+        PGresult *res = PQexecPrepared(
+            db_service->conn,
+            QUERY_ALL_CLIENTS, 
+            2,
+            param_values,
+            param_lengths,
+            param_formats,
+            1 // 0 = string value as result | 1 = for binary
+        );
+        DB_DEBUG("db_service_load_clients: Check results ...")
+        if (res) {
+            if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+                // SUCCESS
+                DB_DEBUG("Cleaning all last requests for clients...")
+                _db_service_clear(db_service);
+
+                DB_DEBUG("Begin copy to allocated registries for clients query")
+
+                int err;
+                size_t index_technician;
+                size_t index_client;
+                TECHNICIAN_DATA *out_technician = NULL;
+                CLIENT_DATA *out_client;
+                int rows = PQntuples(res);
+
+                // We must only acquire one technician data to store array of client (CLIENT QUERY ONLY)
+                if ((err = technician_acquire_technician_data_from_array(&index_technician, &out_technician, db_service->technician_data_requests)) == 0) {
+                    for (int i = 0; i < rows; i++) {
+                        out_client = NULL;
+                        if ((err = technician_acquire_client_data_from_array(&index_client, &out_client, index_technician, db_service->technician_data_requests)) == 0) {
+//id, technician_id, created_at, cpf,
+//name, address, district_city, email, 
+//phone_number, version
+                            int32_t id = _get_pg_i32(res, i, 0);
+                            int32_t technician_id = _get_pg_i32(res, i, 1);
+                            time_t created_at = _get_pg_time(res, i, 2);
+                            const char *cpf = PQgetvalue(res, i, 3);
+                            const char *name = PQgetvalue(res, i, 4);
+                            const char *address = PQgetvalue(res, i, 5);
+                            const char *district_city = PQgetvalue(res, i, 6);
+                            const char *email = PQgetvalue(res, i, 7); 
+                            const char *phone_number = PQgetvalue(res, i, 8);
+                            int32_t version = _get_pg_i32(res, i, 9);
+
+    #ifdef SOLDA_DEBUG
+                            char buffer[64];
+                            DB_DEBUG("Created at: %s", db_time(&buffer[0], sizeof(buffer), &created_at))
+    #endif
+                            DB_DEBUG("Client ID: %u", id)
+                            DB_DEBUG("Client Technician ID: %u", technician_id)
+                            DB_DEBUG("Client cpf: %s", cpf)
+                            DB_DEBUG("Client name: %s", name)
+                            DB_DEBUG("Client address: %s", address)
+                            DB_DEBUG("Client district_city: %s", district_city)
+                            DB_DEBUG("Client email: %s", email)
+                            DB_DEBUG("Client phone number: %s", phone_number)
+                            DB_DEBUG("Client version: %u", version)
+                            if ((err = _db_add_client(db_service, out_client)) == 0) {
+                                err = CLIENT_EXECUTE_ADD(
+                                    out_client, 
+                                    CLIENT_ADD_ID(id),
+                                    CLIENT_ADD_TECHNICIAN_ID(technician_id),
+                                    CLIENT_ADD_CREATED_AT(created_at),
+                                    CLIENT_ADD_CPF(cpf),
+                                    CLIENT_ADD_NAME(name),
+                                    CLIENT_ADD_ADDRESS(address),
+                                    CLIENT_ADD_DISTRICT_CITY(district_city),
+                                    CLIENT_ADD_EMAIL(email),
+                                    CLIENT_ADD_PHONE_NUMBER(phone_number),
+                                    CLIENT_ADD_VERSION(version)
+                                )
+                                out_client->flag = CLIENT_DATA_READ_FROM_DATABASE;
+                                if (err) {
+                                    set_db_service_error(
+                                        db_service,
+                                        err,
+                                        "Fail CLIENT_EXECUTE_ADD @ db_service_load_clients: at index %d. Unable to add to temporary list",
+                                        i
+                                    );
+                                    _db_service_clear(db_service);
+                                    break;
+                                }
+                            } else {
+                                set_db_service_error(
+                                    db_service,
+                                    err,
+                                    "Fail _db_add_client @ db_service_load_clients: at index %d. Unable to add to temporary list",
+                                    i
+                                );
+                                _db_service_clear(db_service);
+                                break;
+                            }
+                        } else {
+                            set_db_service_error(
+                                db_service,
+                                err,
+                                "Fail technician_acquire_client_data_from_array @ db_service_load_clients: at index %d",
+                                i
+                            );
+                            _db_service_clear(db_service);
+                            break;
+                        }
+                    }
+                    DB_DEBUG("Ending copying to allocated registries")
+                } else {
+                    set_db_service_error(
+                        db_service,
+                        err,
+                        "db_service_load_clients: Fail technician_acquire_technician_data_from_array @ db_service_load_clients"
+                    );
+                    _db_service_clear(db_service);                        
+                }
+            } else {
+                const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+                set_db_service_error(
+                    db_service,
+                    DB_QUERY_ALL_TECHNICIANS_EXECUTION_QUERY_ERROR,
+                    "Execute load all clients query failed. SQL state: %s. Postgres message %s",
+                    ((sqlstate)?sqlstate:"None"),
+                    PQresultErrorMessage(res)
+                );
+            }
+
+            PQclear(res);
+        } else
+            set_db_service_error(
+                db_service,
+                DB_QUERY_ALL_CLIENTS_EXECUTION_OUT_OF_MEMORY,
+                "Error. Execute load all clients query failed. Out of memory"
+            );
+
+        DB_DEBUG("db_service_load_clients: Query result status: %d", db_service->err)
+        DB_SERVICE_RETURN
+    }
+
+    DB_ERROR("db_service_load_clients: Null pointer")
+    DB_DEBUG("db_service_load_clients: Invalid pointer")
+    DB_SERVICE_RETURN
+}
+
+int db_service_load_clients_json(char **json_result, size_t *json_result_len, DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
+{
+    if(db_service) {
+        if ((json_result != NULL) && (*json_result == NULL)) {
+            if (json_result_len)
+                *json_result_len = 0;
+
+            uint32_t limit_be  = htonl((uint32_t)limit);
+            uint32_t offset_be = htonl((uint32_t)offset);
+
+            const char *param_values[] = { (const char *)&limit_be, (const char *)&offset_be };
+            int param_lengths[]        = { (int)sizeof(limit_be), (int)sizeof(offset_be) };
+            int param_formats[]        = { 1, 1 };
+
+            DB_DEBUG("db_service_load_clients_json: Check PostgreSQL connection ...")
+            DB_SERVICE_CHECK_CONN(
+                DB_SERVICE_CLOSED_OR_OFFLINE_OR_NOT_AVAILABLE,
+                "Load clients query as JSON failed"
+            )
+
+            DB_DEBUG("db_service_load_clients_json: Execute query ...")
+            PGresult *res = PQexecPrepared(
+                db_service->conn,
+                QUERY_ALL_CLIENTS_JSON, 
+                2,
+                param_values,
+                param_lengths,
+                param_formats,
+                0 // 0 = string value as result | 1 = for binary
+            );
+            DB_DEBUG("db_service_load_clients_json: Check results ...")
+
+            if (res) {
+                if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+                    const char *json_string = DB_EMPTY_JSON_ARRAY;
+                    int json_len_tmp = (int)DB_EMPTY_JSON_ARRAY_LEN;
+
+                    if (!PQgetisnull(res, 0, 0)) {
+                        // SUCCESS
+                        DB_DEBUG("db_service_load_clients_json: Cleaning all last requests ...")
+
+                        _db_service_clear(db_service);
+
+                        json_string = PQgetvalue(res, 0, 0);
+                        json_len_tmp = PQgetlength(res, 0, 0);
+                        DB_DEBUG("db_service_load_clients_json: Begin JSON string parsing at pointer %p of size %d\n", json_string, json_len_tmp)
+
+                        if (json_len_tmp <= 0) {
+                            json_string = DB_EMPTY_JSON_ARRAY;
+                            json_len_tmp = DB_EMPTY_JSON_ARRAY_LEN;
+                        }
+
+                        DB_DEBUG("db_service_load_clients_json: Begin allocation of new %d bytes to copy Postgres result", json_len_tmp + 1)
+                        int err = _db_alloc_align((void **)json_result, (size_t)(json_len_tmp + 1));
+
+                        if (err == 0) {
+                            memcpy((void *)*json_result, (void *)json_string, (size_t)json_len_tmp);
+                            (*json_result)[(size_t)json_len_tmp] = 0;
+
+                            if (json_len_tmp)
+                                *json_result_len = (size_t)json_len_tmp;
+
+                            DB_DEBUG("db_service_load_clients_json: Postgres copy %d bytes of JSON success from %p to %p", json_len_tmp, json_string, *json_result)
+                        } else {
+                            DB_ERROR("db_service_load_clients_json: Unexpected _db_alloc_align error %d", err)
+                            set_db_service_error(
+                                db_service,
+                                DB_QUERY_ALL_CLIENTS_JSON_ALLOCATION_COPY_BLOCK,
+                                "JSON Postgres copy allocation error %d", err
+                            );        
+                        }
+                    }
+                } else {
+                    const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+                    set_db_service_error(
+                        db_service,
+                        DB_QUERY_ALL_CLIENTS_EXECUTION_JSON_QUERY_ERROR,
+                        "Execute load all clients query as JSON failed. SQL state: %s. Postgres message %s",
+                        ((sqlstate)?sqlstate:"None"),
+                        PQresultErrorMessage(res)
+                    );
+                }
+
+                PQclear(res);
+            } else
+                set_db_service_error(
+                    db_service,
+                    DB_QUERY_ALL_CLIENTS_JSON_EXECUTION_OUT_OF_MEMORY,
+                    "Error. Execute load all clients query as JSON failed. Out of memory"
+                );
+        } else {
+            set_db_service_error(
+                db_service,
+                DB_QUERY_ALL_CLIENTS_JSON_INVALID_JSON_POINTER,
+                "db_service_load_clients_json: Invalid JSON pointer"
+            );
+        }
+
+        DB_DEBUG("db_service_load_clients_json: Query result status: %d", db_service->err)
+        DB_SERVICE_RETURN
+    }
+
+    DB_ERROR("db_service_load_clients_json: Null pointer")
+    DB_DEBUG("db_service_load_clients_json: Invalid pointer")
     DB_SERVICE_RETURN
 }

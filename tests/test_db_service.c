@@ -44,6 +44,21 @@ int test_connection()
     free(json);
   }
 
+  json = NULL;
+  err = db_service_load_clients_json(&json, &json_len, db_service, 25, 1);
+
+  if (err) {
+    DB_ERROR("db_service_load_technicians_json error: %d - %s", err, DB_MESSAGE(db_service))
+  } else {
+    printf("\nJSON success for clients with %zu size %s", json_len, json);
+    free(json);
+  }
+
+  err = db_service_load_clients(db_service, 25, 1);
+
+  if (err) {
+    DB_ERROR("db_service_load_clients error: %d - %s", err, DB_MESSAGE(db_service))
+  }
   //TODO implement data access in PostgresSQL
   db_service_free(&db_service);
 

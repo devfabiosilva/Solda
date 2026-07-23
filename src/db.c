@@ -69,8 +69,9 @@ static void repair_requests_free(REPAIR_REQUESTS *repair_requests)
     if (repair_requests->array) {
 
         // For each array, free optional_service_requests arrays (if alloc'd)
-        while (repair_requests->n > 0) {
-            REPAIR *repair_request_ptr = &repair_requests->array[--(repair_requests->n)];
+        size_t array_max_len = repair_requests->array_max_len;
+        while (array_max_len > 0) {
+            REPAIR *repair_request_ptr = &repair_requests->array[--array_max_len];
             SERVICE_REQUESTS *optional_service_requests = &repair_request_ptr->optional_service_requests;
             // Last child array: service request
             DB_ARRAY_FREE(optional_service_requests)
@@ -89,8 +90,9 @@ static void client_data_requests_free(CLIENT_DATA_REQUESTS *client_data_request)
     if (client_data_request->array) {
 
         // For each array, free arrays (if alloc'd)
-        while (client_data_request->n > 0) {
-            CLIENT_DATA *client_data_ptr = &client_data_request->array[--(client_data_request)->n];
+        size_t array_max_len = client_data_request->array_max_len;
+        while (array_max_len > 0) {
+            CLIENT_DATA *client_data_ptr = &client_data_request->array[--array_max_len];
             repair_requests_free(&client_data_ptr->repair_requests);
         }
 
@@ -134,19 +136,25 @@ int technician_data_requests_init(TECHNICIAN_DATA_REQUESTS **requests)
 
 void technician_data_requests_free(TECHNICIAN_DATA_REQUESTS **requests)
 {
+    DB_DEBUG("Entering technician_data_requests_free ...")
     if ((requests != NULL) && (*requests != NULL)) {
 
         if ((*requests)->array) {
-            while ((*requests)->n > 0) {
-                TECHNICIAN_DATA *technician_data_ptr = &(*requests)->array[--(*requests)->n];
+            DB_DEBUG("Cleaning TECHNICIAN_DATA_REQUESTS array...")
+            size_t array_max_len = (*requests)->array_max_len;
+            while (array_max_len > 0) {
+                TECHNICIAN_DATA *technician_data_ptr = &(*requests)->array[--array_max_len];
                 client_data_requests_free(&technician_data_ptr->client_requests);
             }
 
+            DB_DEBUG("Removing TECHNICIAN_DATA_REQUESTS array data...")
             explicit_bzero((void *)(*requests)->array, (*requests)->array_max_len * sizeof(*((*requests)->array)));
             free((void *)(*requests)->array);
+            DB_DEBUG("Destroying TECHNICIAN_DATA_REQUESTS array data...")
             (*requests)->array = NULL;
         }
 
+        DB_DEBUG("Destroying TECHNICIAN_DATA_REQUESTS data...")
         free(*requests);
         *requests = NULL;
     }
@@ -237,32 +245,42 @@ int technician_acquire_client_data_requests_from_array(CLIENT_DATA_REQUESTS **ou
 GROW_ARRAY_FUNC(client_data_requests, CLIENT_DATA)
 int technician_acquire_client_data_from_array(size_t *index, CLIENT_DATA **out, size_t technician_index, TECHNICIAN_DATA_REQUESTS *in)
 {
+    DB_DEBUG("Entering technician_acquire_client_data_from_array")
     TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_BEGIN(
         (index != NULL) && (out != NULL) && (*out == NULL) && (in != NULL), 
         *out = NULL;
         *index = 0;
     )
+        DB_DEBUG("Check this_technician_data->client_requests.array is not NULL ...")
         if (this_technician_data->client_requests.array) {
+            DB_DEBUG("Check this_technician_data->client_requests.n has reached limit >= %zu ...", this_technician_data->client_requests.array_max_len)
             if (this_technician_data->client_requests.n >= this_technician_data->client_requests.array_max_len) {
+                DB_DEBUG("Check this_technician_data->client_requests.n. Growing object in memory")
                 int err = client_data_requests_grow(&this_technician_data->client_requests, 1);
-                if (err)
+                if (err) {
+                    DB_DEBUG("this_technician_data->client_requests.array grow failed %d", err)
                     return err;
+                }
+                DB_DEBUG("Check this_technician_data->client_requests.n. Growing success")
             }
 
             *index = this_technician_data->client_requests.n;
             *out = &this_technician_data->client_requests.array[this_technician_data->client_requests.n++];
-
+            DB_DEBUG("technician_acquire_client_data_from_array success with index %zu at pointer %p", *index, *out)
             return 0;
         }
 
+        DB_DEBUG("Check this_technician_data->client_requests.array is NULL. Alloc new one ...")
         if (db_alloc((void **)&(this_technician_data->client_requests.array), MIN_CLIENT_DATA_REQUESTS_INITIAL * sizeof(*(this_technician_data->client_requests.array))) == 0) {
             this_technician_data->client_requests.array_max_len = MIN_CLIENT_DATA_REQUESTS_INITIAL;
             *index = 0;
             this_technician_data->client_requests.n = 1;
             *out = &this_technician_data->client_requests.array[0];
+            DB_DEBUG("Check this_technician_data->client_requests.array created. Deliver index 0 at pointer %p", *out)
             return 0;
         }
 
+        DB_DEBUG("Error %d (DB_UNABLE_TO_ACQUIRE_AND_ALLOC_DATA_REQUESTS_FROM_TECHNICIAN_DATA_REQUESTS)", DB_UNABLE_TO_ACQUIRE_AND_ALLOC_DATA_REQUESTS_FROM_TECHNICIAN_DATA_REQUESTS)
         return DB_UNABLE_TO_ACQUIRE_AND_ALLOC_DATA_REQUESTS_FROM_TECHNICIAN_DATA_REQUESTS;
     TECHNICIAN_ACQUIRE_CLIENT_DATA_REQUEST_FROM_ARRAY_END
 }

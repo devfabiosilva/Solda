@@ -27,6 +27,8 @@ void db_service_free(DB_SERVICE **);
 
 int db_service_load_technicians(DB_SERVICE *, uint32_t, uint32_t);
 int db_service_load_technicians_json(char **, size_t *, DB_SERVICE *, uint32_t, uint32_t);
+int db_service_load_clients_json(char **, size_t *, DB_SERVICE *, uint32_t, uint32_t);
+int db_service_load_clients(DB_SERVICE *, uint32_t, uint32_t);
 
 #define DB_SERVICE_RETURN return db_service->err;
 

@@ -142,6 +142,7 @@ static int func_name##_grow(type##_REQUESTS *requests, size_t plus_n) \
     if (check) { \
         text \
         if (in->array) { \
+            DB_DEBUG("Check in->n = %zu > technician_index = %zu exists in in->array %p", in->n, technician_index, in->array) \
             if (in->n > technician_index) { \
                 TECHNICIAN_DATA *this_technician_data = &in->array[technician_index];
 
