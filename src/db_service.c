@@ -124,7 +124,7 @@ static int _db_init_query(PGconn *conn)
             "SELECT id, client_data_id, created_at, status, is_budget, device_problem, "
             "brand_model, serial_number, claimed_defect, observations, monetary_type, "
             "expected_budget_date, expected_delivery_date, labor_bugdet, delivery_date, "
-            "warranty FROM repair_request "
+            "warranty, version FROM repair_request "
             "ORDER BY client_data_id "
             "LIMIT $1 OFFSET $2;",
             query_limit_offset
@@ -136,7 +136,7 @@ static int _db_init_query(PGconn *conn)
                 "SELECT id, client_data_id, created_at, status, is_budget, device_problem, "
                 "brand_model, serial_number, claimed_defect, observations, monetary_type, "
                 "expected_budget_date, expected_delivery_date, labor_bugdet, delivery_date, "
-                "warranty FROM repair_request "
+                "warranty, version FROM repair_request "
                 "ORDER BY client_data_id "
                 "LIMIT $1 OFFSET $2", 
             "r"),
