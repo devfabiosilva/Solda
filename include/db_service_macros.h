@@ -42,4 +42,6 @@ if (PQstatus(db_service->conn) != CONNECTION_OK) { \
     DB_DEBUG("_db_init_query status: %d ...", err) \
     return err;
 
+#define DB_QUERY_AS_JSON(text, ch) \
+    "SELECT json_agg(" ch ") FROM (" text ") " ch
 #endif

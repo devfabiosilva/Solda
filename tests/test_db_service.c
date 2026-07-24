@@ -59,6 +59,15 @@ int test_connection()
   if (err) {
     DB_ERROR("db_service_load_clients error: %d - %s", err, DB_MESSAGE(db_service))
   }
+
+  json = NULL;
+  err = db_service_load_repair_requests_json(&json, &json_len, db_service, 50, 1);
+  if (err) {
+    DB_ERROR("db_service_load_repair_requests_json error: %d - %s", err, DB_MESSAGE(db_service))
+  } else {
+    printf("\nJSON repair requests success for clients with %zu size %s", json_len, json);
+    free(json);
+  }
   //TODO implement data access in PostgresSQL
   db_service_free(&db_service);
 
