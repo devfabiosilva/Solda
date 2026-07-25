@@ -509,16 +509,16 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
                         DB_DEBUG("Technician rules: %d", rules)
                         DB_DEBUG("Technician version: %d", version)
                         if ((err = _db_add_technician(db_service, out)) == 0) {
-                            err = TECHNICIAN_EXECUTE_ADD(
+                            err = TECHNICIAN_EXECUTE_READ(
                                 out, 
-                                TECHNICIAN_ADD_ID(id),
-                                TECHNICIAN_ADD_NAME(name),
-                                TECHNICIAN_ADD_CREATED_AT(created_at),
-                                TECHNICIAN_ADD_EMAIL(email),
-                                TECHNICIAN_ADD_RULES(rules),
-                                TECHNICIAN_ADD_VERSION(version)
+                                TECHNICIAN_READ_ID(id),
+                                TECHNICIAN_READ_NAME(name),
+                                TECHNICIAN_READ_CREATED_AT(created_at),
+                                TECHNICIAN_READ_EMAIL(email),
+                                TECHNICIAN_READ_RULES(rules),
+                                TECHNICIAN_READ_VERSION(version)
                             )
-                            out->flag = TECHNICIAN_READ_FROM_DATABASE;
+                            //out->flag = TECHNICIAN_READ_FROM_DATABASE;
                             if (err) {
                                 set_db_service_error(
                                     db_service,

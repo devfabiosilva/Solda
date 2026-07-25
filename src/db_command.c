@@ -6,6 +6,14 @@
 #include <db_log.h>
 #include <sys/types.h>
 
+int technician_read(TECHNICIAN_DATA *technician_data, ...)
+{
+    TECHNICIAN_READ_HELPER(
+        technician_read,
+        flag = TECHNICIAN_READ_FROM_DATABASE;
+    )
+}
+
 int technician_add(TECHNICIAN_DATA *technician_data, ...)
 {
     TECHNICIAN_MANIPULATE_HELPER(

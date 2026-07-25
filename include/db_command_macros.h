@@ -8,6 +8,75 @@
         dst[0] = 0; \
     }
 
+#define TECHNICIAN_READ_HELPER(func, text) \
+    DB_DEBUG(#func ": Access technician_data at %p", technician_data) \
+    if (technician_data) { \
+        TECHNICIAN_DATA_FLAG flag = technician_data->flag; \
+\
+        text \
+\
+        va_list args; \
+\
+        va_start(args, technician_data); \
+        DB_READ_ENUM_COMMAND command; \
+        void *p; \
+        int err = 0; \
+        while ((command = (DB_READ_ENUM_COMMAND)va_arg(args, DB_ADD_ENUM_COMMAND))) { \
+            p = (void *)va_arg(args, void *); \
+            switch (command) { \
+                case DB_TECHNICIAN_READ_ID_COMMAND: \
+                    ssize_t id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((id_as_ssize_t <= (ssize_t)INT32_MAX) && (id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        technician_data->id = (int32_t)id_as_ssize_t; \
+                        DB_DEBUG("\ttechnician_data->id = %d", technician_data->id) \
+                        break; \
+                    } \
+                    DB_DEBUG("\ttechnician_data->id limit reached DB_TECHNICIAN_READ_ID_LIMIT_REACHED(%d)", DB_TECHNICIAN_READ_ID_LIMIT_REACHED) \
+                    err = DB_TECHNICIAN_READ_ID_LIMIT_REACHED; \
+                    goto func##_exit1; \
+                case DB_TECHNICIAN_READ_NAME_COMMAND: \
+                    DB_COPY_STR_FROM(technician_data->name, (char *)p); \
+                    DB_DEBUG("\tAdded technician_data->name = %s", technician_data->name) \
+                    break; \
+                case DB_TECHNICIAN_READ_CREATED_AT: \
+                    technician_data->created_at = (time_t)((intptr_t)p); \
+                    DB_DEBUG("\tAdded technician_data->created_at = %zu", (size_t)technician_data->created_at) \
+                    break; \
+                case DB_TECHNICIAN_READ_VERSION: \
+                    technician_data->version = (int32_t)((intptr_t)p); \
+                    DB_DEBUG("\tAdded technician_data->version = %d", technician_data->version) \
+                    break; \
+                case DB_TECHNICIAN_READ_EMAIL_COMMAND: \
+                    DB_COPY_STR_FROM(technician_data->email, (char *)p) \
+                    DB_DEBUG("\ttechnician_data->email = %s", technician_data->email) \
+                    break; \
+                case DB_TECHNICIAN_READ_PHONE_NUMBER_COMMAND: \
+                    DB_COPY_STR_FROM(technician_data->phone_number, (char *)p) \
+                    DB_DEBUG("\ttechnician_data->phone_number = %s", technician_data->phone_number) \
+                    break; \
+                case DB_TECHNICIAN_READ_RULES: \
+                    technician_data->rules = (TECHNICIAN_RULES)((intptr_t)p); \
+                    DB_DEBUG("\ttechnician_data->rules = %d", technician_data->rules) \
+                    break; \
+                default: \
+                    err = DB_TECHNICIAN_READ_INVALID_COMMAND; \
+                    DB_DEBUG("Error. Invalid command %d with error %d", command, err) \
+                    goto func##_exit1; \
+            } \
+        } \
+func##_exit1: \
+        va_end(args); \
+\
+        if (err == 0) { \
+            technician_data->flag = flag; \
+        } \
+        DB_DEBUG(#func ": ending with status %d", err) \
+        return err; \
+    } \
+\
+    DB_DEBUG(#func ": ending with error DB_TECHNICIAN_DATA_READ_INVALID") \
+    return DB_TECHNICIAN_DATA_READ_INVALID;
+
 #define TECHNICIAN_MANIPULATE_HELPER(func, action, text) \
     DB_DEBUG(#func ": Access technician_data at %p", technician_data) \
     if (technician_data) { \
