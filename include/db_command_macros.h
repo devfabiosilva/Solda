@@ -262,6 +262,100 @@ func##_exit1: \
     DB_DEBUG(#func ": ending with error DB_CLIENT_" #action "_INVALID") \
     return DB_CLIENT_##action##_INVALID;
 
+#define CLIENT_DATA_READ_HELPER(func, text) \
+    DB_DEBUG(#func ": Access client data at %p", client_data) \
+    if (client_data) { \
+        CLIENT_DATA_FLAG flag = client_data->flag; \
+\
+        text \
+\
+        va_list args; \
+\
+        va_start(args, client_data); \
+        DB_READ_ENUM_COMMAND command; \
+        void *p; \
+        int err = 0; \
+        while ((command = (DB_READ_ENUM_COMMAND)va_arg(args, DB_READ_ENUM_COMMAND))) { \
+            p = (void *)va_arg(args, void *); \
+            switch (command) { \
+                case DB_CLIENT_READ_VERSION_COMMAND: \
+                    ssize_t version_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((version_as_ssize_t <= (ssize_t)INT32_MAX) && (version_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        client_data->version = (int32_t)version_as_ssize_t; \
+                        DB_DEBUG("\tclient_data->version = %d", client_data->version) \
+                        break; \
+                    } \
+                    DB_DEBUG("\tclient_data->version limit reached DB_CLIENT_READ_VERSION_LIMIT_REACHED(%d)", DB_CLIENT_READ_VERSION_LIMIT_REACHED) \
+                    err = DB_CLIENT_READ_VERSION_LIMIT_REACHED; \
+                    goto func##_exit1; \                
+                case DB_CLIENT_READ_ID_COMMAND: \
+                    ssize_t id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((id_as_ssize_t <= (ssize_t)INT32_MAX) && (id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        client_data->id = (int32_t)id_as_ssize_t; \
+                        DB_DEBUG("\tclient_data->id = %d", client_data->id) \
+                        break; \
+                    } \
+                    DB_DEBUG("\tclient_data->id limit reached DB_CLIENT_READ_ID_LIMIT_REACHED(%d)", DB_CLIENT_READ_ID_LIMIT_REACHED) \
+                    err = DB_CLIENT_READ_ID_LIMIT_REACHED; \
+                    goto func##_exit1; \
+                case DB_CLIENT_READ_TECHNICIAN_ID_COMMAND: \
+                    ssize_t technician_id_as_ssize_t = (ssize_t)((intptr_t)p); \
+                    if ((technician_id_as_ssize_t <= (ssize_t)INT32_MAX) && (technician_id_as_ssize_t >= (ssize_t)INT32_MIN)) { \
+                        client_data->technician_id = (int32_t)technician_id_as_ssize_t; \
+                        DB_DEBUG("\tclient_data->technician_id = %d", client_data->technician_id) \
+                        break; \
+                    } \
+                    DB_DEBUG("\tclient_data->technician_id limit reached DB_CLIENT_READ_TECHNICIAN_ID_LIMIT_REACHED(%d)", DB_CLIENT_READ_TECHNICIAN_ID_LIMIT_REACHED) \
+                    err = DB_CLIENT_READ_TECHNICIAN_ID_LIMIT_REACHED; \
+                    goto func##_exit1; \
+                case DB_CLIENT_READ_CREATED_AT_COMMAND: \
+                    client_data->created_at = (time_t)((intptr_t)p); \
+                    DB_DEBUG("\tAdded client_data->created_at = %zu", (size_t)client_data->created_at) \
+                    break; \
+                case DB_CLIENT_READ_CPF_COMMAND: \
+                    DB_COPY_STR_FROM(client_data->cpf, (char *)p) \
+                    DB_DEBUG("\tclient_data->cpf = %s", client_data->cpf) \
+                    break; \
+                case DB_CLIENT_READ_NAME_COMMAND: \
+                    DB_COPY_STR_FROM(client_data->name, (char *)p) \
+                    DB_DEBUG("\tclient_data->name = %s", client_data->name) \
+                    break; \
+                case DB_CLIENT_READ_ADDRESS_COMMAND: \
+                    DB_COPY_STR_FROM(client_data->address, (char *)p) \
+                    DB_DEBUG("\tclient_data->address = %s", client_data->address) \
+                    break; \
+                case DB_CLIENT_READ_DISTRICT_CITY_COMMAND: \
+                    DB_COPY_STR_FROM(client_data->district_city, (char *)p) \
+                    DB_DEBUG("\tclient_data->district_city = %s", client_data->district_city) \
+                    break; \
+                case DB_CLIENT_READ_EMAIL_COMMAND: \
+                    DB_COPY_STR_FROM(client_data->email, (char *)p) \
+                    DB_DEBUG("\tclient_data->email = %s", client_data->email) \
+                    break; \
+                case DB_CLIENT_READ_PHONE_NUMBER_COMMAND: \
+                    DB_COPY_STR_FROM(client_data->phone_number, (char *)p) \
+                    DB_DEBUG("\tclient_data->phone_number = %s", client_data->phone_number) \
+                    break; \
+                default: \
+                    err = DB_CLIENT_READ_INVALID_COMMAND; \
+                    DB_DEBUG("\tclient_data invalid command DB_CLIENT_READ_INVALID_COMMAND(%d). Command: %d", DB_CLIENT_READ_INVALID_COMMAND, command) \
+                    goto func##_exit1; \
+            } \
+        } \
+\
+func##_exit1: \
+        va_end(args); \
+\
+        if (err == 0) { \
+            client_data->flag = flag; \
+        } \
+\
+        DB_DEBUG(#func ": ending with status %d", err) \
+        return err; \
+    } \
+\
+    DB_DEBUG(#func ": ending with error DB_CLIENT_READ_INVALID") \
+    return DB_CLIENT_READ_INVALID;
 
 #define REPAIR_MANIPULATE_HELPER(func, action, text) \
     if (repair) { \

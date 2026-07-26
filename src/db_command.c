@@ -63,6 +63,14 @@ void technician_delete(TECHNICIAN_DATA *technician_data)
     }
 }
 
+int client_read(CLIENT_DATA *client_data, ...)
+{
+    CLIENT_DATA_READ_HELPER(
+        client_read,
+        flag = CLIENT_DATA_READ_FROM_DATABASE;
+    )
+}
+
 int client_add(CLIENT_DATA *client_data, ...)
 {
     CLIENT_DATA_MANIPULATE_HELPER(

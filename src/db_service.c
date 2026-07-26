@@ -656,25 +656,25 @@ int db_service_load_clients(DB_SERVICE *db_service, uint32_t limit, uint32_t off
                             DB_DEBUG("Client phone number: %s", phone_number)
                             DB_DEBUG("Client version: %u", version)
                             if ((err = _db_add_client(db_service, out_client)) == 0) {
-                                err = CLIENT_EXECUTE_ADD(
+                                err = CLIENT_EXECUTE_READ(
                                     out_client, 
-                                    CLIENT_ADD_ID(id),
-                                    CLIENT_ADD_TECHNICIAN_ID(technician_id),
-                                    CLIENT_ADD_CREATED_AT(created_at),
-                                    CLIENT_ADD_CPF(cpf),
-                                    CLIENT_ADD_NAME(name),
-                                    CLIENT_ADD_ADDRESS(address),
-                                    CLIENT_ADD_DISTRICT_CITY(district_city),
-                                    CLIENT_ADD_EMAIL(email),
-                                    CLIENT_ADD_PHONE_NUMBER(phone_number),
-                                    CLIENT_ADD_VERSION(version)
+                                    CLIENT_READ_ID(id),
+                                    CLIENT_READ_TECHNICIAN_ID(technician_id),
+                                    CLIENT_READ_CREATED_AT(created_at),
+                                    CLIENT_READ_CPF(cpf),
+                                    CLIENT_READ_NAME(name),
+                                    CLIENT_READ_ADDRESS(address),
+                                    CLIENT_READ_DISTRICT_CITY(district_city),
+                                    CLIENT_READ_EMAIL(email),
+                                    CLIENT_READ_PHONE_NUMBER(phone_number),
+                                    CLIENT_READ_VERSION(version)
                                 )
-                                out_client->flag = CLIENT_DATA_READ_FROM_DATABASE;
+                                //out_client->flag = CLIENT_DATA_READ_FROM_DATABASE;
                                 if (err) {
                                     set_db_service_error(
                                         db_service,
                                         err,
-                                        "Fail CLIENT_EXECUTE_ADD @ db_service_load_clients: at index %d. Unable to add to temporary list",
+                                        "Fail CLIENT_EXECUTE_READ @ db_service_load_clients: at index %d. Unable to add to temporary list",
                                         i
                                     );
                                     _db_service_clear(db_service);
