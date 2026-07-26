@@ -60,12 +60,19 @@ jobs:
       env:
         PGPASSWORD: 1234
 
+    - name: Create solda_mvp database
+      shell: bash
+      run: |
+        createdb -h localhost -U fabio solda_mvp
+        echo "Database solda_mvp created successfully!"
+      env:
+        PGPASSWORD: 1234
+
     - name: Load mock database
       shell: bash
       run: |
-        # Restore the database from dump file
-        #psql -h localhost -U fabio -f tests/solda_mvp.dump
-        pg_restore -h localhost -U fabio -d solda_mvp -1 tests/solda_mvp.dump
+        # Restore the database from dump file (custom format)
+        pg_restore -h localhost -U fabio -d solda_mvp tests/solda_mvp.dump
         echo "Database restored successfully!"
       env:
         PGPASSWORD: 1234
