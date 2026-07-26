@@ -65,7 +65,7 @@ jobs:
       run: |
         # Restore the database from dump file
         #psql -h localhost -U fabio -f tests/solda_mvp.dump
-        pg_restore -h localhost -U fabio -d postgres -1 tests/solda_mvp.dump
+        pg_restore -h localhost -U fabio -d solda_mvp -1 tests/solda_mvp.dump
         echo "Database restored successfully!"
       env:
         PGPASSWORD: 1234
