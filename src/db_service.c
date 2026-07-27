@@ -30,20 +30,30 @@ const char *QUERY_ALL_REPAIR_REQUEST_JSON = "QryAllRepairReqJson";
 #define MAX_REPAIR_REQUESTS_LIMIT_BYTES (MAX_REPAIR_REQUESTS_LIMIT * sizeof(*(*db_service)->repair_list))
 #define MAX_SERVICE_REQUESTS_LIMIT_BYTES (MAX_SERVICE_REQUESTS_LIMIT * sizeof(*(*db_service)->service_list))
 
+#define MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES_A (MAX_TECHNICIAN_DATA_REQUESTS_LIMIT * sizeof(*(db_service->technician_data_list)))
+#define MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES_A (MAX_CLIENT_DATA_REQUESTS_LIMIT * sizeof(*(db_service->client_data_list)))
+#define MAX_REPAIR_REQUESTS_LIMIT_BYTES_A (MAX_REPAIR_REQUESTS_LIMIT * sizeof(*(db_service->repair_list)))
+#define MAX_SERVICE_REQUESTS_LIMIT_BYTES_A (MAX_SERVICE_REQUESTS_LIMIT * sizeof(*(db_service->service_list)))
+
 static void _db_service_clear(DB_SERVICE *db_service)
 {
+    DB_DEBUG("_db_service_clear: Clear all db_service query lists ...")
     technician_data_requests_clear(db_service->technician_data_requests);
 
-    explicit_bzero((void *)db_service->technician_data_list, sizeof(*(db_service->technician_data_list)));
+    DB_DEBUG("_db_service_clear: Cleaning db_service->technician_data_list at %p of size %zu", db_service->technician_data_list, MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES_A)
+    explicit_bzero((void *)db_service->technician_data_list, MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES_A);
     db_service->technician_data_list_index = -1;
 
-    explicit_bzero((void *)db_service->client_data_list, sizeof(*(db_service->client_data_list)));
+    DB_DEBUG("_db_service_clear: Cleaning db_service->client_data_list at %p of size %zu", db_service->client_data_list, MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES_A)
+    explicit_bzero((void *)db_service->client_data_list, MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES_A);
     db_service->client_data_list_index = -1;
 
-    explicit_bzero((void *)db_service->repair_list, sizeof(*(db_service->repair_list)));
+    DB_DEBUG("_db_service_clear: Cleaning db_service->repair_list at %p of size %zu", db_service->repair_list, MAX_REPAIR_REQUESTS_LIMIT_BYTES_A)
+    explicit_bzero((void *)db_service->repair_list, MAX_REPAIR_REQUESTS_LIMIT_BYTES_A);
     db_service->repair_list_index = -1;
 
-    explicit_bzero((void *)db_service->service_list, sizeof(*(db_service->service_list)));
+    DB_DEBUG("_db_service_clear: Cleaning db_service->service_list at %p of size %zu", db_service->service_list, MAX_SERVICE_REQUESTS_LIMIT_BYTES_A)
+    explicit_bzero((void *)db_service->service_list, MAX_SERVICE_REQUESTS_LIMIT_BYTES_A);
     db_service->service_list_index = -1;
 }
 
