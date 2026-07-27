@@ -388,7 +388,7 @@ int db_service_load_technicians_json(char **json_result, size_t *json_result_len
                             json_string = DB_EMPTY_JSON_ARRAY;
                             json_len_tmp = DB_EMPTY_JSON_ARRAY_LEN;
                         }
-
+db_service_load_technicians_json_cpy:
                         DB_DEBUG("db_service_load_technicians_json: Begin allocation of new %d bytes to copy Postgres result", json_len_tmp + 1)
                         int err = _db_alloc_align((void **)json_result, (size_t)(json_len_tmp + 1));
 
@@ -408,6 +408,9 @@ int db_service_load_technicians_json(char **json_result, size_t *json_result_len
                                 "JSON Postgres copy allocation error %d", err
                             );        
                         }
+                    } else {
+                        DB_DEBUG("db_service_load_technicians_json: Postgres return empty query ...")
+                        goto db_service_load_technicians_json_cpy;
                     }
                 } else {
                     const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
@@ -789,7 +792,7 @@ int db_service_load_clients_json(char **json_result, size_t *json_result_len, DB
                             json_string = DB_EMPTY_JSON_ARRAY;
                             json_len_tmp = DB_EMPTY_JSON_ARRAY_LEN;
                         }
-
+db_service_load_clients_json_cpy:
                         DB_DEBUG("db_service_load_clients_json: Begin allocation of new %d bytes to copy Postgres result", json_len_tmp + 1)
                         int err = _db_alloc_align((void **)json_result, (size_t)(json_len_tmp + 1));
 
@@ -809,6 +812,9 @@ int db_service_load_clients_json(char **json_result, size_t *json_result_len, DB
                                 "JSON Postgres copy allocation error %d", err
                             );        
                         }
+                    } else {
+                        DB_DEBUG("db_service_load_clients_json: Postgres return empty query ...")
+                        goto db_service_load_clients_json_cpy;
                     }
                 } else {
                     const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
@@ -897,6 +903,7 @@ int db_service_load_repair_requests_json(char **json_result, size_t *json_result
                             json_len_tmp = DB_EMPTY_JSON_ARRAY_LEN;
                         }
 
+db_service_load_repair_requests_json_cpy:
                         DB_DEBUG("db_service_load_repair_requests_json: Begin allocation of new %d bytes to copy Postgres result", json_len_tmp + 1)
                         int err = _db_alloc_align((void **)json_result, (size_t)(json_len_tmp + 1));
 
@@ -916,6 +923,9 @@ int db_service_load_repair_requests_json(char **json_result, size_t *json_result
                                 "JSON Postgres copy allocation error %d", err
                             );        
                         }
+                    } else {
+                        DB_DEBUG("db_service_load_repair_requests_json: Postgres returns emtpy query ...")
+                        goto db_service_load_repair_requests_json_cpy;
                     }
                 } else {
                     const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
