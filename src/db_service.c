@@ -24,6 +24,8 @@ const char *QUERY_ALL_CLIENTS = "QryAllClients";
 const char *QUERY_ALL_CLIENTS_JSON = "QryAllClientsJson";
 const char *QUERY_ALL_REPAIR_REQUEST = "QryAllRepairReq";
 const char *QUERY_ALL_REPAIR_REQUEST_JSON = "QryAllRepairReqJson";
+const char *QUERY_ALL_SERVICE_REQUEST = "QryAllServiceReq";
+const char *QUERY_ALL_SERVICE_REQUEST_JSON = "QryAllServiceReqJson";
 
 #define MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES (MAX_TECHNICIAN_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->technician_data_list))
 #define MAX_CLIENT_DATA_REQUESTS_LIMIT_BYTES (MAX_CLIENT_DATA_REQUESTS_LIMIT * sizeof(*(*db_service)->client_data_list))
@@ -150,6 +152,27 @@ static int _db_init_query(PGconn *conn)
                 "ORDER BY client_data_id "
                 "LIMIT $1 OFFSET $2", 
             "r"),
+            query_limit_offset
+        )
+
+        DB_BUILD_SQL(
+            QUERY_ALL_SERVICE_REQUEST,
+            "select id, repair_request_id, created_at, quantity, unity_price, "
+            "description, monetary_type from service_request "
+            "order by id "
+            "limit $1 offset $2",
+            query_limit_offset
+        )
+
+        DB_BUILD_SQL(
+            QUERY_ALL_SERVICE_REQUEST_JSON,
+            DB_QUERY_AS_JSON(
+                "select id, repair_request_id, created_at, quantity, unity_price, "
+                "description, monetary_type from service_request "
+                "order by "
+                "id limit $1 offset $2",
+                "s"
+            ),
             query_limit_offset
         )
 
@@ -861,6 +884,13 @@ db_service_load_clients_json_cpy:
     DB_SERVICE_RETURN
 }
 
+/*
+int db_service_load_repair_requests(DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
+{
+    TODO IMPLEMENT IT
+}
+*/
+
 int db_service_load_repair_requests_json(char **json_result, size_t *json_result_len, DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
 {
     if(db_service) {
@@ -969,5 +999,123 @@ db_service_load_repair_requests_json_cpy:
 
     DB_ERROR("db_service_load_repair_requests_json: Null pointer")
     DB_DEBUG("db_service_load_repair_requests_json: Invalid pointer")
+    DB_SERVICE_RETURN
+}
+
+/*
+int db_service_load_service_requests(DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
+{
+    TODO IMPLEMENT IT
+}
+*/
+
+int db_service_load_service_requests_json(char **json_result, size_t *json_result_len, DB_SERVICE *db_service, uint32_t limit, uint32_t offset)
+{
+    if(db_service) {
+        if ((json_result != NULL) && (*json_result == NULL)) {
+            if (json_result_len)
+                *json_result_len = 0;
+
+            uint32_t limit_be  = htonl((uint32_t)limit);
+            uint32_t offset_be = htonl((uint32_t)offset);
+
+            const char *param_values[] = { (const char *)&limit_be, (const char *)&offset_be };
+            int param_lengths[]        = { (int)sizeof(limit_be), (int)sizeof(offset_be) };
+            int param_formats[]        = { 1, 1 };
+
+            DB_DEBUG("db_service_load_service_requests_json: Check PostgreSQL connection ...")
+            DB_SERVICE_CHECK_CONN(
+                DB_SERVICE_CLOSED_OR_OFFLINE_OR_NOT_AVAILABLE,
+                "Load service requests query as JSON failed"
+            )
+
+            DB_DEBUG("db_service_load_service_requests_json: Execute query ...")
+            PGresult *res = PQexecPrepared(
+                db_service->conn,
+                QUERY_ALL_SERVICE_REQUEST_JSON, 
+                2,
+                param_values,
+                param_lengths,
+                param_formats,
+                0 // 0 = string value as result | 1 = for binary
+            );
+            DB_DEBUG("db_service_load_service_requests_json: Check results ...")
+
+            if (res) {
+                if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+                    const char *json_string = DB_EMPTY_JSON_ARRAY;
+                    int json_len_tmp = (int)DB_EMPTY_JSON_ARRAY_LEN;
+
+                    if (!PQgetisnull(res, 0, 0)) {
+                        // SUCCESS
+                        DB_DEBUG("db_service_load_service_requests_json: Cleaning all last requests ...")
+
+                        _db_service_clear(db_service);
+
+                        json_string = PQgetvalue(res, 0, 0);
+                        json_len_tmp = PQgetlength(res, 0, 0);
+                        DB_DEBUG("db_service_load_service_requests_json: Begin JSON string parsing at pointer %p of size %d\n", json_string, json_len_tmp)
+
+                        if (json_len_tmp <= 0) {
+                            json_string = DB_EMPTY_JSON_ARRAY;
+                            json_len_tmp = DB_EMPTY_JSON_ARRAY_LEN;
+                        }
+
+db_service_load_repair_requests_json_cpy:
+                        DB_DEBUG("db_service_load_service_requests_json: Begin allocation of new %d bytes to copy Postgres result", json_len_tmp + 1)
+                        int err = _db_alloc_align((void **)json_result, (size_t)(json_len_tmp + 1));
+
+                        if (err == 0) {
+                            memcpy((void *)*json_result, (void *)json_string, (size_t)json_len_tmp);
+                            (*json_result)[(size_t)json_len_tmp] = 0;
+
+                            if (json_len_tmp)
+                                *json_result_len = (size_t)json_len_tmp;
+
+                            DB_DEBUG("db_service_load_service_requests_json: Postgres copy %d bytes of JSON success from %p to %p", json_len_tmp, json_string, *json_result)
+                        } else {
+                            DB_ERROR("db_service_load_service_requests_json: Unexpected _db_alloc_align error %d", err)
+                            set_db_service_error(
+                                db_service,
+                                DB_QUERY_ALL_SERVICE_REQUEST_JSON_ALLOCATION_COPY_BLOCK,
+                                "JSON Postgres copy allocation error %d", err
+                            );        
+                        }
+                    } else {
+                        DB_DEBUG("db_service_load_service_requests_json: Postgres returns emtpy query ...")
+                        goto db_service_load_repair_requests_json_cpy;
+                    }
+                } else {
+                    const char *sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+                    set_db_service_error(
+                        db_service,
+                        DB_QUERY_ALL_SERVICE_REQUESTS_EXECUTION_JSON_QUERY_ERROR,
+                        "Execute load all service requests query as JSON failed. SQL state: %s. Postgres message %s",
+                        ((sqlstate)?sqlstate:"None"),
+                        PQresultErrorMessage(res)
+                    );
+                }
+
+                PQclear(res);
+            } else
+                set_db_service_error(
+                    db_service,
+                    DB_QUERY_ALL_SERVICE_REQUESTS_JSON_EXECUTION_OUT_OF_MEMORY,
+                    "Error. Execute load all service requests query as JSON failed. Out of memory"
+                );
+        } else {
+            set_db_service_error(
+                db_service,
+                DB_QUERY_ALL_SERVICE_REQUESTS_JSON_INVALID_JSON_POINTER,
+                "db_service_load_service_requests_json: Invalid JSON pointer"
+            );
+        }
+
+        DB_DEBUG("db_service_load_service_requests_json: Query result status: %d", db_service->err)
+        DB_SERVICE_RETURN
+    }
+
+    DB_ERROR("db_service_load_service_requests_json: Null pointer")
+    DB_DEBUG("db_service_load_service_requests_json: Invalid pointer")
     DB_SERVICE_RETURN
 }

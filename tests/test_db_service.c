@@ -70,6 +70,16 @@ int test_connection()
     free(json);
   }
 
+  json = NULL;
+  err = db_service_load_service_requests_json(&json, &json_len, db_service, 50, 1);
+
+  if (err) {
+    DB_ERROR("db_service_load_service_requests_json error: %d - %s", err, DB_MESSAGE(db_service))
+  } else {
+    printf("\nJSON service requests success with %zu size %s\n", json_len, json);
+    free(json);
+  }
+
   db_service_free(&db_service);
 
   return err;

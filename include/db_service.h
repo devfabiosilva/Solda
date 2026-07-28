@@ -30,6 +30,7 @@ int db_service_load_technicians_json(char **, size_t *, DB_SERVICE *, uint32_t, 
 int db_service_load_clients_json(char **, size_t *, DB_SERVICE *, uint32_t, uint32_t);
 int db_service_load_clients(DB_SERVICE *, uint32_t, uint32_t);
 int db_service_load_repair_requests_json(char **, size_t *, DB_SERVICE *, uint32_t, uint32_t);
+int db_service_load_service_requests_json(char **json_result, size_t *json_result_len, DB_SERVICE *, uint32_t, uint32_t);
 
 #define DB_SERVICE_RETURN return db_service->err;
 
