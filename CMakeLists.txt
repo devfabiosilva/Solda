@@ -30,6 +30,20 @@ endif()
 # include path
 include_directories(include)
 
+execute_process(
+    COMMAND pg_config --includedir-server
+    OUTPUT_VARIABLE PG_SERVER_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(NOT PG_SERVER_INCLUDE_DIR)
+    message(FATAL_ERROR "pg_config --includedir-server not found! Is PostgreSQL server installed?")
+endif()
+
+message(STATUS "PostgreSQL server include: ${PG_SERVER_INCLUDE_DIR}")
+
+include_directories(${PG_SERVER_INCLUDE_DIR})
+
 # core — static library
 add_library(solda_core STATIC
     src/db.c

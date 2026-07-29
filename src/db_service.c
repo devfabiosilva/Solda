@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <db_service_macros.h>
 #include <endian.h>
-#include <postgresql/14/server/catalog/pg_type_d.h>
+#include <catalog/pg_type_d.h>
 
 #ifdef SOLDA_DEBUG
     #include <db_time.h>
