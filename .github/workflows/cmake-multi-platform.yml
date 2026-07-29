@@ -48,6 +48,12 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Intall PostgresSQL 14 server
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install postgresql-server-dev-14
+
     - name: Setup PostgreSQL
       shell: bash
       run: |
