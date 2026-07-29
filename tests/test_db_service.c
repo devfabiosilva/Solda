@@ -21,8 +21,9 @@ int test_connection()
     "host=localhost "
     "dbname=solda_mvp "
     "user=fabio "
-    "password=1234"
+    "password=1234 "
   );
+  //"sslmode=disable"
 
   if (err)
     return err;

@@ -208,6 +208,13 @@ _Static_assert(sizeof(*(*db_service)) == sizeof(DB_SERVICE), "Invalid size");
                 }
                 DB_DEBUG("Check Postgres status SUCCESS ...")
 
+                if (PQsslInUse((*db_service)->conn)) {
+                    const char *protocol = PQsslAttribute((*db_service)->conn, "protocol");
+                    const char *cipher = PQsslAttribute((*db_service)->conn, "cipher");
+                    DB_INFO("db_service_init: Postgres connection is SECURE: protocol %s and cipher %s\n", protocol?protocol:"Unknown", cipher?cipher:"Unknonw");
+                } else
+                    DB_WARN("db_service_init: Postgres connection is INSECURE\n");
+
                 DB_DEBUG("db_service_init. Begin allocation (*db_service)->technician_data_list ...")
                 if (db_alloc((void **)&(*db_service)->technician_data_list, MAX_TECHNICIAN_DATA_REQUESTS_LIMIT_BYTES)) {
                     err = DB_SEVICE_UNABLE_TO_INIT_TECHNICIAN_DATA_RESQUEST_LIST;
