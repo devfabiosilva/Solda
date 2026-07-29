@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <db_service_macros.h>
 #include <endian.h>
+#include <postgresql/14/server/catalog/pg_type_d.h>
 
 #ifdef SOLDA_DEBUG
     #include <db_time.h>
@@ -370,10 +371,15 @@ static int32_t _get_pg_i32(PGresult *res, int row, int col)
 {
     int32_t ret;
     if (!PQgetisnull(res, row, col)) {
-        memcpy(&ret, PQgetvalue(res, row, col), sizeof(ret));
-        return (int32_t)ntohl(ret);
+        if ((PQftype(res, col) == INT4OID) && (PQgetlength(res, row, col) == (int)sizeof(ret))) {
+            memcpy(&ret, PQgetvalue(res, row, col), sizeof(ret));
+            return (int32_t)ntohl(ret);
+        }
+        DB_WARN("_get_pg_i32: INVALID TYPE OF INT32. Returning -2 ...")
+        return -2;
     }
 
+    DB_WARN("_get_pg_i32: NULL INT32. Returning -1 ...")
     return -1;
 }
 
