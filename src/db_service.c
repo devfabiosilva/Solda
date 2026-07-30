@@ -382,7 +382,7 @@ DB_STRING *_get_pg_string(DB_STRING *db_string_ptr, PGresult *res, int row, int 
 {
     if (!PQgetisnull(res, row, col)) {
         int len = PQgetlength(res, row, col);
-        if (len > 0) {
+        if (len >= 0) {
             Oid type = PQftype(res, col);
             if ((type == string_type)) {
                 db_string_ptr->str_len = (size_t)len;
@@ -393,9 +393,6 @@ DB_STRING *_get_pg_string(DB_STRING *db_string_ptr, PGresult *res, int row, int 
             DB_WARN("_get_pg_string: Invalid string type %d. Was expected %d", type, string_type)
         }
     }
-
-    db_string_ptr->str = NULL;
-    db_string_ptr->str_len = 0;
 
     return NULL;
 }
@@ -575,30 +572,36 @@ int db_service_load_technicians(DB_SERVICE *db_service, uint32_t limit, uint32_t
                         //phone_number from technician_data
                         
                         int32_t id = _get_pg_i32(res, i, 0);
-                        const char *name = PQgetvalue(res, i, 1);
+                        //const char *name = PQgetvalue(res, i, 1);
+                        DB_STRING name;
                         time_t created_at = _get_pg_time(res, i, 2);
-                        const char *email = PQgetvalue(res, i, 3);
+                        //const char *email = PQgetvalue(res, i, 3);
+                        DB_STRING email;
                         int32_t rules = _get_pg_i32(res, i, 4);
                         int32_t version = _get_pg_i32(res, i, 5);
-                        const char *phone_number = PQgetvalue(res, i, 6);
+                        //const char *phone_number = PQgetvalue(res, i, 6);
+                        DB_STRING phone_number;
 #ifdef SOLDA_DEBUG
                         char buffer[64];
                         DB_DEBUG("Created at: %s", db_time(&buffer[0], sizeof(buffer), &created_at))
 #endif
+                        /*
                         DB_DEBUG("Technician ID: %u", id)
                         DB_DEBUG("Technician name: %s", name)
                         DB_DEBUG("Technician email: %s", email)
                         DB_DEBUG("Technician rules: %d", rules)
                         DB_DEBUG("Technician version: %d", version)
+                        */
                         if ((err = _db_add_technician(db_service, out)) == 0) {
                             err = TECHNICIAN_EXECUTE_READ(
                                 out, 
                                 TECHNICIAN_READ_ID(id),
-                                TECHNICIAN_READ_NAME(name),
+                                TECHNICIAN_READ_NAME(_get_pg_string(&name, res, i, 1, VARCHAROID)),
                                 TECHNICIAN_READ_CREATED_AT(created_at),
-                                TECHNICIAN_READ_EMAIL(email),
+                                TECHNICIAN_READ_EMAIL(_get_pg_string(&email, res, i, 3, VARCHAROID)),
                                 TECHNICIAN_READ_RULES(rules),
-                                TECHNICIAN_READ_VERSION(version)
+                                TECHNICIAN_READ_VERSION(version),
+                                TECHNICIAN_READ_PHONE_NUMBER(_get_pg_string(&phone_number, res, i, 6, VARCHAROID))
                             )
                             //out->flag = TECHNICIAN_READ_FROM_DATABASE;
                             if (err) {
@@ -716,18 +719,25 @@ int db_service_load_clients(DB_SERVICE *db_service, uint32_t limit, uint32_t off
                             int32_t id = _get_pg_i32(res, i, 0);
                             int32_t technician_id = _get_pg_i32(res, i, 1);
                             time_t created_at = _get_pg_time(res, i, 2);
-                            const char *cpf = PQgetvalue(res, i, 3);
-                            const char *name = PQgetvalue(res, i, 4);
-                            const char *address = PQgetvalue(res, i, 5);
-                            const char *district_city = PQgetvalue(res, i, 6);
-                            const char *email = PQgetvalue(res, i, 7); 
-                            const char *phone_number = PQgetvalue(res, i, 8);
+                            //const char *cpf = PQgetvalue(res, i, 3);
+                            DB_STRING cpf;
+                            //const char *name = PQgetvalue(res, i, 4);
+                            DB_STRING name;
+                            //const char *address = PQgetvalue(res, i, 5);
+                            DB_STRING address;
+                            //const char *district_city = PQgetvalue(res, i, 6);
+                            DB_STRING district_city;
+                            //const char *email = PQgetvalue(res, i, 7);
+                            DB_STRING email;
+                            //const char *phone_number = PQgetvalue(res, i, 8);
+                            DB_STRING phone_number;
                             int32_t version = _get_pg_i32(res, i, 9);
 
     #ifdef SOLDA_DEBUG
                             char buffer[64];
                             DB_DEBUG("Created at: %s", db_time(&buffer[0], sizeof(buffer), &created_at))
     #endif
+                            /*
                             DB_DEBUG("Client ID: %u", id)
                             DB_DEBUG("Client Technician ID: %u", technician_id)
                             DB_DEBUG("Client cpf: %s", cpf)
@@ -737,18 +747,19 @@ int db_service_load_clients(DB_SERVICE *db_service, uint32_t limit, uint32_t off
                             DB_DEBUG("Client email: %s", email)
                             DB_DEBUG("Client phone number: %s", phone_number)
                             DB_DEBUG("Client version: %u", version)
+                            */
                             if ((err = _db_add_client(db_service, out_client)) == 0) {
                                 err = CLIENT_EXECUTE_READ(
                                     out_client, 
                                     CLIENT_READ_ID(id),
                                     CLIENT_READ_TECHNICIAN_ID(technician_id),
                                     CLIENT_READ_CREATED_AT(created_at),
-                                    CLIENT_READ_CPF(cpf),
-                                    CLIENT_READ_NAME(name),
-                                    CLIENT_READ_ADDRESS(address),
-                                    CLIENT_READ_DISTRICT_CITY(district_city),
-                                    CLIENT_READ_EMAIL(email),
-                                    CLIENT_READ_PHONE_NUMBER(phone_number),
+                                    CLIENT_READ_CPF(_get_pg_string(&cpf, res, i, 3, VARCHAROID)),
+                                    CLIENT_READ_NAME(_get_pg_string(&name, res, i, 4, VARCHAROID)),
+                                    CLIENT_READ_ADDRESS(_get_pg_string(&address, res, i, 5, VARCHAROID)),
+                                    CLIENT_READ_DISTRICT_CITY(_get_pg_string(&district_city, res, i, 6, VARCHAROID)),
+                                    CLIENT_READ_EMAIL(_get_pg_string(&email, res, i, 7, VARCHAROID)),
+                                    CLIENT_READ_PHONE_NUMBER(_get_pg_string(&phone_number, res, i, 8, VARCHAROID)),
                                     CLIENT_READ_VERSION(version)
                                 )
                                 //out_client->flag = CLIENT_DATA_READ_FROM_DATABASE;

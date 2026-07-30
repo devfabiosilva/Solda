@@ -8,6 +8,21 @@
         dst[0] = 0; \
     }
 
+#define DB_COPY_DB_STR_FROM(dst, src) \
+    if (src) { \
+        DB_STRING *db_string = (DB_STRING *)src; \
+        size_t len = db_string->str_len; \
+        if (len > (sizeof(dst)-1)) \
+            len = (sizeof(dst)-1); \
+\
+        if (len > 0) \
+            memcpy(dst, db_string->str, len); \
+\
+        dst[len] = 0; \
+    } else { \
+        dst[0] = 0; \
+    }
+
 #define TECHNICIAN_READ_HELPER(func, text) \
     DB_DEBUG(#func ": Access technician_data at %p", technician_data) \
     if (technician_data) { \
@@ -35,7 +50,7 @@
                     err = DB_TECHNICIAN_READ_ID_LIMIT_REACHED; \
                     goto func##_exit1; \
                 case DB_TECHNICIAN_READ_NAME_COMMAND: \
-                    DB_COPY_STR_FROM(technician_data->name, (char *)p); \
+                    DB_COPY_DB_STR_FROM(technician_data->name, p); \
                     DB_DEBUG("\tAdded technician_data->name = %s", technician_data->name) \
                     break; \
                 case DB_TECHNICIAN_READ_CREATED_AT: \
@@ -47,11 +62,11 @@
                     DB_DEBUG("\tAdded technician_data->version = %d", technician_data->version) \
                     break; \
                 case DB_TECHNICIAN_READ_EMAIL_COMMAND: \
-                    DB_COPY_STR_FROM(technician_data->email, (char *)p) \
+                    DB_COPY_DB_STR_FROM(technician_data->email, p) \
                     DB_DEBUG("\ttechnician_data->email = %s", technician_data->email) \
                     break; \
                 case DB_TECHNICIAN_READ_PHONE_NUMBER_COMMAND: \
-                    DB_COPY_STR_FROM(technician_data->phone_number, (char *)p) \
+                    DB_COPY_DB_STR_FROM(technician_data->phone_number, p) \
                     DB_DEBUG("\ttechnician_data->phone_number = %s", technician_data->phone_number) \
                     break; \
                 case DB_TECHNICIAN_READ_RULES: \
@@ -313,27 +328,27 @@ func##_exit1: \
                     DB_DEBUG("\tAdded client_data->created_at = %zu", (size_t)client_data->created_at) \
                     break; \
                 case DB_CLIENT_READ_CPF_COMMAND: \
-                    DB_COPY_STR_FROM(client_data->cpf, (char *)p) \
+                    DB_COPY_DB_STR_FROM(client_data->cpf, p) \
                     DB_DEBUG("\tclient_data->cpf = %s", client_data->cpf) \
                     break; \
                 case DB_CLIENT_READ_NAME_COMMAND: \
-                    DB_COPY_STR_FROM(client_data->name, (char *)p) \
+                    DB_COPY_DB_STR_FROM(client_data->name, p) \
                     DB_DEBUG("\tclient_data->name = %s", client_data->name) \
                     break; \
                 case DB_CLIENT_READ_ADDRESS_COMMAND: \
-                    DB_COPY_STR_FROM(client_data->address, (char *)p) \
+                    DB_COPY_DB_STR_FROM(client_data->address, p) \
                     DB_DEBUG("\tclient_data->address = %s", client_data->address) \
                     break; \
                 case DB_CLIENT_READ_DISTRICT_CITY_COMMAND: \
-                    DB_COPY_STR_FROM(client_data->district_city, (char *)p) \
+                    DB_COPY_DB_STR_FROM(client_data->district_city, p) \
                     DB_DEBUG("\tclient_data->district_city = %s", client_data->district_city) \
                     break; \
                 case DB_CLIENT_READ_EMAIL_COMMAND: \
-                    DB_COPY_STR_FROM(client_data->email, (char *)p) \
+                    DB_COPY_DB_STR_FROM(client_data->email, p) \
                     DB_DEBUG("\tclient_data->email = %s", client_data->email) \
                     break; \
                 case DB_CLIENT_READ_PHONE_NUMBER_COMMAND: \
-                    DB_COPY_STR_FROM(client_data->phone_number, (char *)p) \
+                    DB_COPY_DB_STR_FROM(client_data->phone_number, p) \
                     DB_DEBUG("\tclient_data->phone_number = %s", client_data->phone_number) \
                     break; \
                 default: \
