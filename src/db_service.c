@@ -93,7 +93,7 @@ static int _db_add_client(DB_SERVICE *db_service, CLIENT_DATA *client_data) {
 
 static int _db_init_query(PGconn *conn)
 {
-    const Oid query_limit_offset[] = {23, 23};
+    const Oid query_limit_offset[] = {INT4OID, INT4OID};
 
     DB_BUILD_SQL_BEGIN
 

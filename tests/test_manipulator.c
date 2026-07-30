@@ -614,10 +614,10 @@ int test_add_invalid_manipulation()
     }
 
 test_add_invalid_manipulation_exit:
-    printf("\nntest_add_invalid_manipulation: technician_requests pointer before free %p\n", technician_requests);
+    printf("\ntest_add_invalid_manipulation: technician_requests pointer before free %p\n", technician_requests);
     technician_data_requests_free(&technician_requests);
-    printf("\nntest_add_invalid_manipulation: technician_requests pointer after free %p\n", technician_requests);
-    TITLE_MSG("ntest_add_invalid_manipulation: End test_add_manipulation ...")
+    printf("\ntest_add_invalid_manipulation: technician_requests pointer after free %p\n", technician_requests);
+    TITLE_MSG("\ntest_add_invalid_manipulation: End test_add_manipulation ...")
     end_tests();
     return err;
 }
