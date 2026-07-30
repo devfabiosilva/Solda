@@ -378,7 +378,7 @@ static time_t _get_pg_time(PGresult *res, int row, int col)
     return 0;
 }
 
-DB_STRING *_get_pg_string(DB_STRING *db_string_ptr, PGresult *res, int row, int col, Oid string_type)
+static DB_STRING *_get_pg_string(DB_STRING *db_string_ptr, PGresult *res, int row, int col, Oid string_type)
 {
     if (!PQgetisnull(res, row, col)) {
         int len = PQgetlength(res, row, col);
@@ -391,6 +391,8 @@ DB_STRING *_get_pg_string(DB_STRING *db_string_ptr, PGresult *res, int row, int 
                 return db_string_ptr;
             }
             DB_WARN("_get_pg_string: Invalid string type %d. Was expected %d", type, string_type)
+        } else {
+            DB_WARN("_get_pg_string: Invalid string length %d", len)
         }
     }
 
