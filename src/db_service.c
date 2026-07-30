@@ -356,19 +356,19 @@ void db_service_free(DB_SERVICE **db_service)
 
 static time_t _get_pg_time(PGresult *res, int row, int col)
 {
-    int64_t ret;
     if (!PQgetisnull(res, row, col)) {
+        int64_t ret;
         if ((PQftype(res, col) == TIMESTAMPTZOID) && (PQgetlength(res, row, col) == (int)sizeof(ret))) {
             memcpy(&ret, PQgetvalue(res, row, col), sizeof(ret));
             ret = be64toh(ret); // BE to LE
             ret /= 1000000LL; // Convert microsseconds to seconds ...
             ret += 946684800LL; // Add 30 Years in seconds (postgres initial timestamp 2000)
-            if (ret > 0)
-                return ret;
+            if (ret >= 0)
+                return (time_t)ret;
             
-            DB_WARN("_get_pg_time: Negative value of timestamp tz")
+            DB_WARN("_get_pg_time: Negative value of timestamp tz. Set to 0")
         } else {
-            DB_WARN("_get_pg_time: Invalid timestamp tz or invalid type size")
+            DB_WARN("_get_pg_time: Invalid timestamp tz or invalid type size. Set to 0")
         }
 
         return 0;
