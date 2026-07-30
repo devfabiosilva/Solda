@@ -10,6 +10,8 @@
 #include <db_service_macros.h>
 #include <endian.h>
 #include <catalog/pg_type_d.h>
+#include <db_type.h>
+//#include <postgresql/14/server/catalog/pg_type_d.h>
 
 #ifdef SOLDA_DEBUG
     #include <db_time.h>
@@ -356,15 +358,46 @@ static time_t _get_pg_time(PGresult *res, int row, int col)
 {
     int64_t ret;
     if (!PQgetisnull(res, row, col)) {
-        memcpy(&ret, PQgetvalue(res, row, col), sizeof(ret));
-        ret = be64toh(ret); // BE to LE
-        ret /= 1000000LL; // Convert microsseconds to seconds ...
-        ret += 946684800LL; // Add 30 Years in seconds (postgres initial timestamp 2000)
-        if (ret > 0)
-            return ret;
+        if ((PQftype(res, col) == TIMESTAMPTZOID) && (PQgetlength(res, row, col) == (int)sizeof(ret))) {
+            memcpy(&ret, PQgetvalue(res, row, col), sizeof(ret));
+            ret = be64toh(ret); // BE to LE
+            ret /= 1000000LL; // Convert microsseconds to seconds ...
+            ret += 946684800LL; // Add 30 Years in seconds (postgres initial timestamp 2000)
+            if (ret > 0)
+                return ret;
+            
+            DB_WARN("_get_pg_time: Negative value of timestamp tz")
+        } else {
+            DB_WARN("_get_pg_time: Invalid timestamp tz or invalid type size")
+        }
+
+        return 0;
     }
 
+    DB_WARN("_get_pg_time: Invalid NULL date time")
     return 0;
+}
+
+DB_STRING *_get_pg_string(DB_STRING *db_string_ptr, PGresult *res, int row, int col, Oid string_type)
+{
+    if (!PQgetisnull(res, row, col)) {
+        int len = PQgetlength(res, row, col);
+        if (len > 0) {
+            Oid type = PQftype(res, col);
+            if ((type == string_type)) {
+                db_string_ptr->str_len = (size_t)len;
+                db_string_ptr->str = PQgetvalue(res, row, col);
+
+                return db_string_ptr;
+            }
+            DB_WARN("_get_pg_string: Invalid string type %d. Was expected %d", type, string_type)
+        }
+    }
+
+    db_string_ptr->str = NULL;
+    db_string_ptr->str_len = 0;
+
+    return NULL;
 }
 
 static int32_t _get_pg_i32(PGresult *res, int row, int col)
