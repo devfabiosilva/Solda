@@ -42,17 +42,17 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Intall PostgresSQL 14 dev header server
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install postgresql-server-dev-16
+
     - name: Set reusable strings
       id: strings
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
-
-    - name: Intall PostgresSQL 14 server
-      shell: bash
-      run: |
-        sudo apt update
-        sudo apt install postgresql-server-dev-16
 
     - name: Setup PostgreSQL
       shell: bash
