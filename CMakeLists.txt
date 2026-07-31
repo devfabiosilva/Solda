@@ -61,6 +61,45 @@ add_compile_options(
 )
 
 
+###################### C++ Qt6 Configuration ######################
+
+option(ONLY_SOLDA_CORE "Build only solda core" ON)
+
+if(NOT ONLY_SOLDA_CORE)
+# Qt6.11.1 locally installed
+set(CMAKE_PREFIX_PATH
+    "$ENV{HOME}/Qt/6.11.1/gcc_64"
+    ${CMAKE_PREFIX_PATH}
+)
+
+# Find modules
+find_package(Qt6 REQUIRED COMPONENTS
+    Widgets        # Window, buttons, layouts
+    PrintSupport   # OS print
+)
+
+# Qt — moc, uic, atomatic rcc 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+
+# Qt6 Executable
+add_executable(SoldaApp
+    src/ui/main.cpp
+    src/ui/mainwindow.cpp
+    src/ui/mainwindow.h
+)
+
+target_link_libraries(SoldaApp
+    solda_core      # core C
+    Qt6::Widgets
+    Qt6::PrintSupport
+    pq
+)
+
+endif()
+####################################################################
+
 # TEST optional -DTEST=ON
 option(TEST "Enable test" ON)
 if(TEST)
