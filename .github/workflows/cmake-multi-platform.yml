@@ -114,7 +114,7 @@ jobs:
 
   build_ui:
     runs-on: ${{ matrix.os }}
-    if: ${{ inputs.build_ui == 'true' }}
+    if: ${{ github.event.inputs.build_ui == 'true' }}
 
     services:
       postgres:
