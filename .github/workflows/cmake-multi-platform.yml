@@ -29,7 +29,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        build_type: [Debug, Release]
+        build_type: [Debug, Release, QT6_Debug, QT6_Release]
         c_compiler: [gcc]
         include:
           - os: ubuntu-latest
@@ -89,9 +89,20 @@ jobs:
         if [ "${{ matrix.build_type }}" = "Release" ]; then
           echo "Configuring Release build (ASAN disabled)"
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DASAN=OFF
-        else
+        elif [ "${{ matrix.build_type }}" = "Debug" ]; then
           echo "Configuring ${{ matrix.build_type }} build (ASAN enabled)"
           cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON
+        elif [ "${{ matrix.build_type }}" = "QT6_Debug" ]; then
+          echo "TODO add QT6 Debug build on"
+          echo "Configuring ${{ matrix.build_type }} build (ASAN enabled)"
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON
+        elif [ "${{ matrix.build_type }}" = "QT6_Release" ]; then
+          echo "TODO add QT6 Release build on"
+          echo "Configuring Release build (ASAN disabled)"
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DASAN=OFF
+        else
+          echo "Unknown option: ${{ matrix.build_type }}"
+          exit 1
         fi
 
     - name: Build
