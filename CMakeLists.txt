@@ -23,7 +23,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3 -march=native)
     message(STATUS "Build: Release (-O3)")
 else()
-    add_compile_options(-O0 -g -DSOLDA_DEBUG)
+    add_compile_options(
+      -O0
+      -g
+      -DSOLDA_DEBUG
+      --coverage
+    )
+    add_link_options(--coverage)
     message(STATUS "Build: Debug (-O0)")
 endif()
 
