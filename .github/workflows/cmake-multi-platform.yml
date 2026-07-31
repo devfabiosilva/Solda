@@ -114,6 +114,7 @@ jobs:
 
   build_ui:
     runs-on: ${{ matrix.os }}
+    if: ${{ inputs.build_ui == true }}
 
     services:
       postgres:
@@ -146,6 +147,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Cache Qt installation
+      id: cache-qt
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/Qt
+        key: ${{ runner.os }}-qt6-11-1-cache-${{ hashFiles('**/CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-qt6-11-1-cache-
+
+    - name: Install Qt 6.11.1
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.11.1'
+        cached: ${{ steps.cache-qt.outputs.cache-hit }}
+        dir: ${{ github.workspace }}
 
     - name: Intall PostgresSQL 14 dev header server
       shell: bash
@@ -193,10 +210,10 @@ jobs:
       run: |
         if [ "${{ matrix.build_type }}" = "QT6_Debug" ]; then
           echo "Configuring ${{ matrix.build_type }} build (ASAN enabled)"
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON -DONLY_SOLDA_CORE=OFF
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON -DONLY_SOLDA_CORE=OFF -DCMAKE_PREFIX_PATH="${{ github.workspace }}/Qt/6.11.1/gcc_64
         elif [ "${{ matrix.build_type }}" = "QT6_Release" ]; then
           echo "Configuring Release build (ASAN disabled)"
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DASAN=OFF -DONLY_SOLDA_CORE=OFF
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DASAN=OFF -DONLY_SOLDA_CORE=OFF -DCMAKE_PREFIX_PATH="${{ github.workspace }}/Qt/6.11.1/gcc_64
         else
           echo "Unknown option: ${{ matrix.build_type }}"
           exit 1
