@@ -5,6 +5,13 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      build_ui:
+        description: 'Compile and test Qt6 UI?'
+        required: true
+        type: boolean
+        default: true
 
 jobs:
   build:
@@ -29,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        build_type: [Debug, Release, QT6_Debug, QT6_Release]
+        build_type: [Debug, Release]
         c_compiler: [gcc]
         include:
           - os: ubuntu-latest
@@ -92,7 +99,99 @@ jobs:
         elif [ "${{ matrix.build_type }}" = "Debug" ]; then
           echo "Configuring ${{ matrix.build_type }} build (ASAN enabled)"
           cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON
-        elif [ "${{ matrix.build_type }}" = "QT6_Debug" ]; then
+        else
+          echo "Unknown option: ${{ matrix.build_type }}"
+          exit 1
+        fi
+
+    - name: Build
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+      run: ctest --verbose --build-config ${{ matrix.build_type }}
+
+
+  build_ui:
+    runs-on: ${{ matrix.os }}
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: 1234
+          POSTGRES_USER: fabio
+          POSTGRES_INITDB_ARGS: "-U fabio"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        build_type: [QT6_Debug, QT6_Release]
+        c_compiler: [gcc]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+        exclude:
+          - os: ubuntu-latest
+            c_compiler: cl
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Intall PostgresSQL 14 dev header server
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install postgresql-server-dev-16
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Setup PostgreSQL
+      shell: bash
+      run: |
+        # Wait for PostgreSQL to be ready
+        until pg_isready -h localhost -p 5432 -U fabio; do
+          echo "Waiting for PostgreSQL to be ready..."
+          sleep 1
+        done
+        echo "PostgreSQL is ready!"
+      env:
+        PGPASSWORD: 1234
+
+    - name: Create solda_mvp database
+      shell: bash
+      run: |
+        createdb -h localhost -U fabio solda_mvp
+        echo "Database solda_mvp created successfully!"
+      env:
+        PGPASSWORD: 1234
+
+    - name: Load mock database
+      shell: bash
+      run: |
+        # Restore the database from dump file (custom format)
+        pg_restore -h localhost -U fabio -d solda_mvp tests/solda_mvp.dump
+        echo "Database restored successfully!"
+      env:
+        PGPASSWORD: 1234
+
+    - name: Configure CMake
+      shell: bash
+      run: |
+        if [ "${{ matrix.build_type }}" = "QT6_Debug" ]; then
           echo "Configuring ${{ matrix.build_type }} build (ASAN enabled)"
           cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON -DONLY_SOLDA_CORE=OFF
         elif [ "${{ matrix.build_type }}" = "QT6_Release" ]; then
