@@ -93,13 +93,11 @@ jobs:
           echo "Configuring ${{ matrix.build_type }} build (ASAN enabled)"
           cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON
         elif [ "${{ matrix.build_type }}" = "QT6_Debug" ]; then
-          echo "TODO add QT6 Debug build on"
           echo "Configuring ${{ matrix.build_type }} build (ASAN enabled)"
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DASAN=ON -DONLY_SOLDA_CORE=OFF
         elif [ "${{ matrix.build_type }}" = "QT6_Release" ]; then
-          echo "TODO add QT6 Release build on"
           echo "Configuring Release build (ASAN disabled)"
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DASAN=OFF
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DASAN=OFF -DONLY_SOLDA_CORE=OFF
         else
           echo "Unknown option: ${{ matrix.build_type }}"
           exit 1
