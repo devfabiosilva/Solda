@@ -7,6 +7,8 @@ set(CMAKE_C_STANDARD 11)
 #valgrind --leak-check=full --show-leak-kinds=all ./test_db_service
 #
 # ASAN optional -DASAN=ON
+# Add valgrind --suppressions=qt6.supp ./SoldaApp
+
 option(ASAN "Enable AddressSanitizer" ON)
 if(ASAN AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-fsanitize=address,leak)
@@ -94,6 +96,7 @@ add_executable(SoldaApp
     src/ui/main.cpp
     src/ui/mainwindow.cpp
     src/ui/mainwindow.h
+    src/ui/mainwindow.ui
 )
 
 target_link_libraries(SoldaApp

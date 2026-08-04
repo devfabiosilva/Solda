@@ -1,0 +1,31 @@
+{
+   qt6_xcb_uninit
+   Memcheck:Param
+   writev(vector[...])
+   obj:*libxcb*
+}
+{
+   qt6_dbus_read
+   Memcheck:Addr16
+   obj:*libQt6Core*
+   obj:*libQt6DBus*
+}
+{
+   qt6_still_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   obj:*libQt6*
+}
+{
+   qt6_xcb_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   obj:*libxcb*
+}
+{
+   qt6_x11_reachable
+   Memcheck:Leak
+   match-leak-kinds: reachable,possible
+   obj:*libX11*
+}
+
