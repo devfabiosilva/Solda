@@ -130,6 +130,7 @@ jobs:
           genhtml coverage.info --output-directory coverage-html
         else
           echo "Release mode. Ignoring coverage..."
+        fi
 
     - name: Upload Coverage Report Website
       if: "${{ matrix.build_type }}" = "Debug"
