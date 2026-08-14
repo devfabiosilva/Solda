@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    connect(ui->pushButton, &QPushButton::clicked, this, &MainWindow::on_loadDatabase_clicked_a);
+    connect(ui->loadDatabase, &QPushButton::clicked, this, &MainWindow::on_loadDatabase_clicked_a);
 }
 
 MainWindow::~MainWindow()
