@@ -15,7 +15,14 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    void on_loadDatabase_clicked_a();
     ~MainWindow() override;
+
+private slots:
+
+    //void on_loadDatabase_clicked();
+
+    void on_loadDatabase_clicked();
 
 private:
     Ui::MainWindow *ui;

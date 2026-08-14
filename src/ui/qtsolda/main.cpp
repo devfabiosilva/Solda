@@ -4,6 +4,15 @@
 #include <QLocale>
 #include <QTranslator>
 
+
+extern "C" {
+    #include <db_service.h>
+    #include <db.h>
+    #include <db_log.h>
+}
+
+DB_SERVICE *g_dbService = nullptr;
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
@@ -19,5 +28,9 @@ int main(int argc, char *argv[])
     }
     MainWindow w;
     w.show();
-    return QApplication::exec();
+    int res = QApplication::exec();
+
+    db_service_free(&g_dbService);
+
+    return res;
 }

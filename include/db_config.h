@@ -1,6 +1,12 @@
 #ifndef DB_CONFIG_H
  #define DB_CONFIG_H
 
+#ifdef __cplusplus
+  #ifndef _Static_assert
+    #define _Static_assert static_assert
+  #endif
+#endif
+
 #define SHORT_NAME_SZ       64    // short names
 #define NAME_SZ             100   // name, email
 #define ADDRESS_SZ          200   // full address

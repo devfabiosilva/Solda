@@ -17,7 +17,7 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>610</x>
+      <x>640</x>
       <y>360</y>
       <width>83</width>
       <height>22</height>
@@ -27,27 +27,14 @@
      <string>PushButton</string>
     </property>
    </widget>
-   <widget class="QListView" name="listView">
+   <widget class="QTableView" name="tableView">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>120</y>
-      <width>361</width>
-      <height>251</height>
+      <x>10</x>
+      <y>30</y>
+      <width>771</width>
+      <height>291</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox">
-    <property name="geometry">
-     <rect>
-      <x>630</x>
-      <y>250</y>
-      <width>84</width>
-      <height>19</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>CheckBox</string>
     </property>
    </widget>
   </widget>
