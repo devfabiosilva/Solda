@@ -93,10 +93,10 @@ set(CMAKE_AUTORCC ON)
 
 # Qt6 Executable
 add_executable(SoldaApp
-    src/ui/qtsolda/main.cpp
-    src/ui/qtsolda/mainwindow.cpp
-    src/ui/qtsolda/mainwindow.h
-    src/ui/qtsolda/mainwindow.ui
+    src/ui/main.cpp
+    src/ui/mainwindow.cpp
+    src/ui/mainwindow.h
+    src/ui/mainwindow.ui
 )
 
 target_link_libraries(SoldaApp
