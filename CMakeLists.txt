@@ -97,6 +97,9 @@ add_executable(SoldaApp
     src/ui/mainwindow.cpp
     src/ui/mainwindow.h
     src/ui/mainwindow.ui
+    src/ui/about.ui
+    src/ui/about.h
+    src/ui/about.cpp
 )
 
 target_link_libraries(SoldaApp

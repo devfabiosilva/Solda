@@ -43,6 +43,7 @@ else()
     else()
         add_executable(qtsolda
             ${PROJECT_SOURCES}
+            about.h about.cpp about.ui
         )
     endif()
 

@@ -406,3 +406,16 @@ COPY (
 ) TO '/tmp/solda_test.csv'
 WITH (FORMAT csv, HEADER true, DELIMITER ',');
 
+
+SELECT
+    t.id            AS technician_id,
+    t.name          AS technician_name,
+    t.email         AS technician_email,
+    t.phone_number  AS technician_phone,
+    t.rules         AS technician_rules,
+    t.version       AS technician_version
+FROM repair_request r
+JOIN client_data c    ON c.id = r.client_data_id
+JOIN technician_data t ON t.id = c.technician_id
+WHERE r.id = $1;
+
