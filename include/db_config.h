@@ -1,61 +1,84 @@
 #ifndef DB_CONFIG_H
- #define DB_CONFIG_H
+#define DB_CONFIG_H
 
 #ifdef __cplusplus
-  #ifndef _Static_assert
-    #define _Static_assert static_assert
-  #endif
+#ifndef _Static_assert
+#define _Static_assert static_assert
+#endif
 #endif
 
-#define SHORT_NAME_SZ       64    // short names
-#define NAME_SZ             100   // name, email
-#define ADDRESS_SZ          200   // full address
-#define DESCRIPTION_SZ      150   // service, parts description 
-#define LONG_DESCRIPTION_SZ 500   // observations, related defects
-#define SERIAL_NUMBER_SZ    100   // IMEI, serial
-#define PHONE_SZ            20    // phone
-#define CPF_SZ              20    // fixed — "000.000.000-00" + 6 bytes for update system
+#define SHORT_NAME_SZ 64         // short names
+#define NAME_SZ 100              // name, email
+#define ADDRESS_SZ 200           // full address
+#define DESCRIPTION_SZ 150       // service, parts description
+#define LONG_DESCRIPTION_SZ 500  // observations, related defects
+#define SERIAL_NUMBER_SZ 100     // IMEI, serial
+#define PHONE_SZ 20              // phone
+#define CPF_SZ 20  // fixed — "000.000.000-00" + 6 bytes for update system
 
 // UTF-8 byte size (worst case)
-//Email specs: RFC 5321
-#define EMAIL_ADDRESS_SZ        (255 + 1)
-#define EMAIL_ADDRESS_BUF       EMAIL_ADDRESS_SZ
-#define SHORT_NAME_BUF          (SHORT_NAME_SZ       * 4 + 1)
-#define NAME_BUF                (NAME_SZ             * 4 + 1)
-#define ADDRESS_BUF             (ADDRESS_SZ          * 4 + 1)
-#define DESCRIPTION_BUF         (DESCRIPTION_SZ      * 4 + 1)
-#define LONG_DESCRIPTION_BUF    (LONG_DESCRIPTION_SZ * 4 + 1)
-#define SERIAL_NUMBER_BUF       (SERIAL_NUMBER_SZ    * 4 + 1)
-#define PHONE_BUF               (PHONE_SZ            * 4 + 1)
-#define CPF_BUF                 (CPF_SZ              * 4 + 1)
+// Email specs: RFC 5321
+#define EMAIL_ADDRESS_SZ (255 + 1)
+#define EMAIL_ADDRESS_BUF EMAIL_ADDRESS_SZ
+#define SHORT_NAME_BUF (SHORT_NAME_SZ * 4 + 1)
+#define NAME_BUF (NAME_SZ * 4 + 1)
+#define ADDRESS_BUF (ADDRESS_SZ * 4 + 1)
+#define DESCRIPTION_BUF (DESCRIPTION_SZ * 4 + 1)
+#define LONG_DESCRIPTION_BUF (LONG_DESCRIPTION_SZ * 4 + 1)
+#define SERIAL_NUMBER_BUF (SERIAL_NUMBER_SZ * 4 + 1)
+#define PHONE_BUF (PHONE_SZ * 4 + 1)
+#define CPF_BUF (CPF_SZ * 4 + 1)
 
-#define MIN_REPAIR_REQUESTS_INITIAL 16 // MIN request list element per client at init
-#define MAX_REPAIR_REQUESTS_LIMIT 1024 // MAX request list element per client
+#define MIN_REPAIR_REQUESTS_INITIAL \
+  16  // MIN request list element per client at init
+#define MAX_REPAIR_REQUESTS_LIMIT 1024  // MAX request list element per client
 
-_Static_assert(MIN_REPAIR_REQUESTS_INITIAL > 0, "MIN_REPAIR_REQUEST_INITIAL must be greater than 0");
-_Static_assert(((MIN_REPAIR_REQUESTS_INITIAL & 1) == 0) && ((MAX_REPAIR_REQUESTS_LIMIT & 1) == 0), "MIN_REPAIR_REQUEST_INITIAL and MAX_REPAIR_REQUESTS_LIMIT must be multiple of 2");
-_Static_assert(MAX_REPAIR_REQUESTS_LIMIT > MIN_REPAIR_REQUESTS_INITIAL, "Wrong REPAIR REQUEST boundaries");
+_Static_assert(MIN_REPAIR_REQUESTS_INITIAL > 0,
+               "MIN_REPAIR_REQUEST_INITIAL must be greater than 0");
+_Static_assert(((MIN_REPAIR_REQUESTS_INITIAL & 1) == 0) &&
+                   ((MAX_REPAIR_REQUESTS_LIMIT & 1) == 0),
+               "MIN_REPAIR_REQUEST_INITIAL and MAX_REPAIR_REQUESTS_LIMIT must "
+               "be multiple of 2");
+_Static_assert(MAX_REPAIR_REQUESTS_LIMIT > MIN_REPAIR_REQUESTS_INITIAL,
+               "Wrong REPAIR REQUEST boundaries");
 
 #define MIN_SERVICE_REQUESTS_INITIAL MIN_REPAIR_REQUESTS_INITIAL
 #define MAX_SERVICE_REQUESTS_LIMIT MAX_REPAIR_REQUESTS_LIMIT
 
-_Static_assert(MIN_SERVICE_REQUESTS_INITIAL > 0, "MIN_SERVICE_REQUESTS_INITIAL must be greater than 0");
-_Static_assert(((MIN_SERVICE_REQUESTS_INITIAL & 1) == 0) && ((MAX_SERVICE_REQUESTS_LIMIT & 1) == 0), "MIN_SERVICE_REQUESTS_INITIAL and MAX_SERVICE_REQUESTS_LIMIT must be multiple of 2");
-_Static_assert(MAX_SERVICE_REQUESTS_LIMIT > MIN_SERVICE_REQUESTS_INITIAL, "Wrong SERVICE_REQUESTS boundaries");
+_Static_assert(MIN_SERVICE_REQUESTS_INITIAL > 0,
+               "MIN_SERVICE_REQUESTS_INITIAL must be greater than 0");
+_Static_assert(((MIN_SERVICE_REQUESTS_INITIAL & 1) == 0) &&
+                   ((MAX_SERVICE_REQUESTS_LIMIT & 1) == 0),
+               "MIN_SERVICE_REQUESTS_INITIAL and MAX_SERVICE_REQUESTS_LIMIT "
+               "must be multiple of 2");
+_Static_assert(MAX_SERVICE_REQUESTS_LIMIT > MIN_SERVICE_REQUESTS_INITIAL,
+               "Wrong SERVICE_REQUESTS boundaries");
 
 #define MIN_CLIENT_DATA_REQUESTS_INITIAL MIN_REPAIR_REQUESTS_INITIAL
 #define MAX_CLIENT_DATA_REQUESTS_LIMIT MAX_REPAIR_REQUESTS_LIMIT
 
-_Static_assert(MIN_CLIENT_DATA_REQUESTS_INITIAL > 0, "MIN_CLIENT_DATA_REQUESTS_INITIAL must be greater than 0");
-_Static_assert(((MIN_CLIENT_DATA_REQUESTS_INITIAL & 1) == 0) && ((MAX_CLIENT_DATA_REQUESTS_LIMIT & 1) == 0), "MIN_CLIENT_DATA_REQUESTS_INITIAL and MAX_CLIENT_DATA_REQUESTS_LIMIT must be multiple of 2");
-_Static_assert(MAX_CLIENT_DATA_REQUESTS_LIMIT > MIN_CLIENT_DATA_REQUESTS_INITIAL, "Wrong CLIENT_DATA boundaries");
+_Static_assert(MIN_CLIENT_DATA_REQUESTS_INITIAL > 0,
+               "MIN_CLIENT_DATA_REQUESTS_INITIAL must be greater than 0");
+_Static_assert(((MIN_CLIENT_DATA_REQUESTS_INITIAL & 1) == 0) &&
+                   ((MAX_CLIENT_DATA_REQUESTS_LIMIT & 1) == 0),
+               "MIN_CLIENT_DATA_REQUESTS_INITIAL and "
+               "MAX_CLIENT_DATA_REQUESTS_LIMIT must be multiple of 2");
+_Static_assert(MAX_CLIENT_DATA_REQUESTS_LIMIT >
+                   MIN_CLIENT_DATA_REQUESTS_INITIAL,
+               "Wrong CLIENT_DATA boundaries");
 
 #define MIN_TECHNICIAN_DATA_REQUESTS_INITIAL MIN_REPAIR_REQUESTS_INITIAL
 #define MAX_TECHNICIAN_DATA_REQUESTS_LIMIT MAX_REPAIR_REQUESTS_LIMIT
 
-_Static_assert(MIN_TECHNICIAN_DATA_REQUESTS_INITIAL > 0, "MIN_TECHNICIAN_DATA_REQUESTS_INITIAL must be greater than 0");
-_Static_assert(((MIN_TECHNICIAN_DATA_REQUESTS_INITIAL & 1) == 0) && ((MAX_TECHNICIAN_DATA_REQUESTS_LIMIT & 1) == 0), "MIN_TECHNICIAN_DATA_REQUESTS_INITIAL and MAX_TECHNICIAN_DATA_REQUESTS_LIMIT must be multiple of 2");
-_Static_assert(MAX_TECHNICIAN_DATA_REQUESTS_LIMIT > MIN_TECHNICIAN_DATA_REQUESTS_INITIAL, "Wrong TECHNICIAN_DATA_REQUESTS boundaries");
+_Static_assert(MIN_TECHNICIAN_DATA_REQUESTS_INITIAL > 0,
+               "MIN_TECHNICIAN_DATA_REQUESTS_INITIAL must be greater than 0");
+_Static_assert(((MIN_TECHNICIAN_DATA_REQUESTS_INITIAL & 1) == 0) &&
+                   ((MAX_TECHNICIAN_DATA_REQUESTS_LIMIT & 1) == 0),
+               "MIN_TECHNICIAN_DATA_REQUESTS_INITIAL and "
+               "MAX_TECHNICIAN_DATA_REQUESTS_LIMIT must be multiple of 2");
+_Static_assert(MAX_TECHNICIAN_DATA_REQUESTS_LIMIT >
+                   MIN_TECHNICIAN_DATA_REQUESTS_INITIAL,
+               "Wrong TECHNICIAN_DATA_REQUESTS boundaries");
 
 // DB SERVICE
 #define DB_MESSAGE_LEN 1023

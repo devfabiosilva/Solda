@@ -9,20 +9,19 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
+class MainWindow : public QMainWindow {
+  Q_OBJECT
 
-public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    void loadSoldaDatabase();
-    ~MainWindow() override;
+ public:
+  explicit MainWindow(QWidget *parent = nullptr);
+  void loadSoldaDatabase();
+  ~MainWindow() override;
 
-private slots:
+ private slots:
 
-    //void on_loadDatabase_clicked();
+  void on_action_About_Solda_triggered();
 
-private:
-    Ui::MainWindow *ui;
+ private:
+  Ui::MainWindow *ui;
 };
-#endif // MAINWINDOW_H
+#endif  // MAINWINDOW_H

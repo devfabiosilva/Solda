@@ -1,18 +1,14 @@
 #ifndef DB_H
- #define DB_H
+#define DB_H
 
+#include <db_config.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
-#include <stdbool.h>
-#include <db_config.h>
 
-#define DB_SET_TOUCHED(x) (1<<x)
+#define DB_SET_TOUCHED(x) (1 << x)
 
-typedef enum monetary_type_e {
-  BRL = 0,
-  US_DOLLAR,
-  BITCOIN
-} MONETARY_TYPE;
+typedef enum monetary_type_e { BRL = 0, US_DOLLAR, BITCOIN } MONETARY_TYPE;
 
 // BEGIN SERVICE REQUEST
 
@@ -27,16 +23,17 @@ typedef enum service_request_flag_e {
 } SERVICE_REQUEST_FLAG;
 
 typedef struct service_request_t {
-  uint32_t id;                                     // PK
+  uint32_t id;  // PK
   int32_t version;
-  uint32_t repair_request_id;                      // FK for request
+  uint32_t repair_request_id;  // FK for request
   int32_t touched;
-  time_t created_at;                               // Created service request
-  SERVICE_REQUEST_FLAG flag;                       // Only on edit/update mode. This field will NOT record at database
-  int32_t quantity;                                // Quantity > 0
-  MONETARY_TYPE monetary_type;                     // Monetary type
-  int64_t unity_price;                             // Unity price (required)
-  char description[LONG_DESCRIPTION_BUF];          // Description (required)
+  time_t created_at;  // Created service request
+  SERVICE_REQUEST_FLAG
+  flag;  // Only on edit/update mode. This field will NOT record at database
+  int32_t quantity;                        // Quantity > 0
+  MONETARY_TYPE monetary_type;             // Monetary type
+  int64_t unity_price;                     // Unity price (required)
+  char description[LONG_DESCRIPTION_BUF];  // Description (required)
 } SERVICE;
 
 typedef enum service_request_touched_e {
@@ -51,31 +48,31 @@ typedef enum service_request_touched_e {
 } SERVICE_REQUEST_TOUCHED;
 
 typedef struct service_requests_t {
-  size_t n;                                        // Actual array size
-  size_t array_max_len;                            // Alloc'd array size
-  SERVICE *array;                                   // Alloc'd pointer for array. Recyclable. Must be free
+  size_t n;              // Actual array size
+  size_t array_max_len;  // Alloc'd array size
+  SERVICE *array;        // Alloc'd pointer for array. Recyclable. Must be free
 } SERVICE_REQUESTS;
 
 // END SERVICE REQUEST
 
 // BEGIN DEVICE DATA
-#define SET_DEVICE_DATA(x) (int)(1<<x)
+#define SET_DEVICE_DATA(x) (int)(1 << x)
 typedef enum solda_electronic_device_problem_e {
-  NO_CHOICE                   = 0,
-  DEVICE_DOES_NOT_TURN_ON     = SET_DEVICE_DATA(0),
-  BROKEN_SCREEN               = SET_DEVICE_DATA(1),
-  TOUCH_DOES_NOT_WORKS        = SET_DEVICE_DATA(2),
-  NO_BUTTONS                  = SET_DEVICE_DATA(3),
-  SWOLLEN_BATTERY             = SET_DEVICE_DATA(4),
-  IN_LOOP                     = SET_DEVICE_DATA(5),
-  NO_CHIP                     = SET_DEVICE_DATA(6),
-  DEFECTIVE_MICROPHONE        = SET_DEVICE_DATA(7),
-  DEVICE_DOES_NOT_CHARGE      = SET_DEVICE_DATA(8),
-  BROKEN_CAMERA               = SET_DEVICE_DATA(9),
-  WITHOUT_INVOICE             = SET_DEVICE_DATA(10),
-  NO_AUDIO                    = SET_DEVICE_DATA(11),
-  INPUT_DEFECTIVE_MICROPHONE  = SET_DEVICE_DATA(12),
-  NO_LID                      = SET_DEVICE_DATA(13)
+  NO_CHOICE = 0,
+  DEVICE_DOES_NOT_TURN_ON = SET_DEVICE_DATA(0),
+  BROKEN_SCREEN = SET_DEVICE_DATA(1),
+  TOUCH_DOES_NOT_WORKS = SET_DEVICE_DATA(2),
+  NO_BUTTONS = SET_DEVICE_DATA(3),
+  SWOLLEN_BATTERY = SET_DEVICE_DATA(4),
+  IN_LOOP = SET_DEVICE_DATA(5),
+  NO_CHIP = SET_DEVICE_DATA(6),
+  DEFECTIVE_MICROPHONE = SET_DEVICE_DATA(7),
+  DEVICE_DOES_NOT_CHARGE = SET_DEVICE_DATA(8),
+  BROKEN_CAMERA = SET_DEVICE_DATA(9),
+  WITHOUT_INVOICE = SET_DEVICE_DATA(10),
+  NO_AUDIO = SET_DEVICE_DATA(11),
+  INPUT_DEFECTIVE_MICROPHONE = SET_DEVICE_DATA(12),
+  NO_LID = SET_DEVICE_DATA(13)
 } ELECTRONIC_DEVICE_PROBLEM;
 #undef SET_DEVICE_DATA
 
@@ -99,26 +96,28 @@ typedef enum repair_request_flag_e {
 } REPAIR_REQUEST_FLAG;
 
 typedef struct repair_request_t {
-  int32_t id;                                         // PK repair request
-  int32_t client_id;                                  // FK For client id
-  int32_t touched;                                    // is touched?
+  int32_t id;         // PK repair request
+  int32_t client_id;  // FK For client id
+  int32_t touched;    // is touched?
   int32_t version;
-  time_t created_at;                                  // Created request timestamp for Solda client user
-  REPAIR_REQUEST_STATUS status;                       // Request status
-  bool is_bugdet;                                     // Binary: Bugdet or Work order
-  REPAIR_REQUEST_FLAG flag;                           // Only on edit/update mode. This field will NOT record at database
-  ELECTRONIC_DEVICE_PROBLEM device_problem;           // Problem data
-  char brand_model[SHORT_NAME_BUF];                   // Brand or model
-  char serial_number[SHORT_NAME_BUF];                 // IMEI, serial number ...
-  char claimed_defect[LONG_DESCRIPTION_BUF];          // Defect according to client user
-  char observations[LONG_DESCRIPTION_BUF];            // Obs
-  MONETARY_TYPE monetary_type;                        // Monetary type
-  time_t expected_budget_date;                        // Expected bugdget date
-  time_t expected_delivery_date;                      // Expected delivery date
-  int64_t labor_budget;                               // labor_bugdet // Fixed point. TODO check validation
-  time_t delivery_date;                               // Delivery date
-  time_t warranty;                                    // Total day from delivery date
-  SERVICE_REQUESTS optional_service_requests;         // ARRAY NULLABLE List of service requests
+  time_t created_at;  // Created request timestamp for Solda client user
+  REPAIR_REQUEST_STATUS status;  // Request status
+  bool is_bugdet;                // Binary: Bugdet or Work order
+  REPAIR_REQUEST_FLAG
+  flag;  // Only on edit/update mode. This field will NOT record at database
+  ELECTRONIC_DEVICE_PROBLEM device_problem;   // Problem data
+  char brand_model[SHORT_NAME_BUF];           // Brand or model
+  char serial_number[SHORT_NAME_BUF];         // IMEI, serial number ...
+  char claimed_defect[LONG_DESCRIPTION_BUF];  // Defect according to client user
+  char observations[LONG_DESCRIPTION_BUF];    // Obs
+  MONETARY_TYPE monetary_type;                // Monetary type
+  time_t expected_budget_date;                // Expected bugdget date
+  time_t expected_delivery_date;              // Expected delivery date
+  int64_t labor_budget;  // labor_bugdet // Fixed point. TODO check validation
+  time_t delivery_date;  // Delivery date
+  time_t warranty;       // Total day from delivery date
+  SERVICE_REQUESTS
+  optional_service_requests;  // ARRAY NULLABLE List of service requests
 } REPAIR;
 
 typedef enum repair_touched_e {
@@ -141,9 +140,9 @@ typedef enum repair_touched_e {
 } REPAIR_TOUCHED;
 
 typedef struct repair_requests_t {
-  size_t n;                                        // Actual array size
-  size_t array_max_len;                            // Alloc'd array size
-  REPAIR *array;                                   // Alloc'd pointer for array. Recyclable. Must be free
+  size_t n;              // Actual array size
+  size_t array_max_len;  // Alloc'd array size
+  REPAIR *array;         // Alloc'd pointer for array. Recyclable. Must be free
 } REPAIR_REQUESTS;
 
 // END DEVICE DATA
@@ -160,39 +159,51 @@ typedef enum client_data_flag_e {
 
 // BEGIN CLIENT USER TABLE
 typedef struct client_data_t {
-  int32_t touched;                                  // For edit/add/update only flag: true if is used (read to flush in database)
-  int32_t id;                                       // PK (required). TODO check sizeof Postgres INTEGER
-  int32_t technician_id;                            // FK Technician id
-  int32_t version;                                  //
-  time_t created_at;                                // Created user timestamp for Solda client user
-  CLIENT_DATA_FLAG flag;                            // Flag. This will not be flushed in database
-  char cpf[CPF_BUF];                                // CPF (required) - UNIQUE
-  char name[NAME_BUF];                              // Client name (required)
-  char address[ADDRESS_BUF];                        // Client address
-  char district_city[ADDRESS_BUF];                  // District and city
-  char email[EMAIL_ADDRESS_BUF];                    // (Required) email address;
-  char phone_number[PHONE_BUF];                     // (Required) Phone number;
-  REPAIR_REQUESTS repair_requests;                  // NOT NULL repair requests
+  int32_t touched;  // For edit/add/update only flag: true if is used (read to
+                    // flush in database)
+  int32_t id;       // PK (required). TODO check sizeof Postgres INTEGER
+  int32_t technician_id;      // FK Technician id
+  int32_t version;            //
+  time_t created_at;          // Created user timestamp for Solda client user
+  CLIENT_DATA_FLAG flag;      // Flag. This will not be flushed in database
+  char cpf[CPF_BUF];          // CPF (required) - UNIQUE
+  char name[NAME_BUF];        // Client name (required)
+  char address[ADDRESS_BUF];  // Client address
+  char district_city[ADDRESS_BUF];  // District and city
+  char email[EMAIL_ADDRESS_BUF];    // (Required) email address;
+  char phone_number[PHONE_BUF];     // (Required) Phone number;
+  REPAIR_REQUESTS repair_requests;  // NOT NULL repair requests
 } CLIENT_DATA;
 
 typedef struct client_data_list_t {
-  size_t n;                                         // Actual array size
-  size_t array_max_len;                             // Alloc'd array size
-  CLIENT_DATA *array;                               // Alloc'd pointer for array. Recyclable. Must be free
+  size_t n;              // Actual array size
+  size_t array_max_len;  // Alloc'd array size
+  CLIENT_DATA *array;    // Alloc'd pointer for array. Recyclable. Must be free
 } CLIENT_DATA_REQUESTS;
 
 // END CLIENT USER TABLE
 
-//BEGIN TECHNICIAN TABLE
-#define SET_TECHNICIAN_RULES(x) (int)(1<<x)
+// BEGIN TECHNICIAN TABLE
+#define SET_TECHNICIAN_RULES(x) (int)(1 << x)
 typedef enum technician_rules_e {
-  NO_ACCESS                       = 0,                        // NO DB ACCESS
-  IS_ROOT_ADMIN_SUPREME           = SET_TECHNICIAN_RULES(0),  // Supreme root admin. Can delete|update|read DB, clients others admins, and technicians
-  IS_ADMIN                        = SET_TECHNICIAN_RULES(1),  // Admin. Can Can delete|update|read DB, clients and technicians
-  CAN_DELETE_CLIENT               = SET_TECHNICIAN_RULES(2),  // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can delete user if enabled
-  CAN_EDIT_CLIENT                 = SET_TECHNICIAN_RULES(3),  // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can update user if enabled
-  CAN_READ_CLIENT                 = SET_TECHNICIAN_RULES(4),  // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can read user if enabled
-  CAN_CHANGE_TECHNICIAN_IN_CLIENT = SET_TECHNICIAN_RULES(5)   // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can change technician in user if enabled
+  NO_ACCESS = 0,  // NO DB ACCESS
+  IS_ROOT_ADMIN_SUPREME =
+      SET_TECHNICIAN_RULES(0),  // Supreme root admin. Can delete|update|read
+                                // DB, clients others admins, and technicians
+  IS_ADMIN = SET_TECHNICIAN_RULES(
+      1),  // Admin. Can Can delete|update|read DB, clients and technicians
+  CAN_DELETE_CLIENT = SET_TECHNICIAN_RULES(
+      2),  // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can delete user
+           // if enabled
+  CAN_EDIT_CLIENT = SET_TECHNICIAN_RULES(
+      3),  // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can update user
+           // if enabled
+  CAN_READ_CLIENT = SET_TECHNICIAN_RULES(
+      4),  // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can read user if
+           // enabled
+  CAN_CHANGE_TECHNICIAN_IN_CLIENT = SET_TECHNICIAN_RULES(
+      5)  // Regular user NOT (IS_ROOT_ADMIN_SUPREME|IS_ADMIN) can change
+          // technician in user if enabled
 } TECHNICIAN_RULES;
 #undef SET_TECHNICIAN_RULES
 
@@ -232,7 +243,7 @@ typedef enum client_data_touched_e {
   CLIENT_CREATED_AT_COMMAND_TOUCHED = DB_SET_TOUCHED(11)
 } CLIENT_DATA_TOUCHED;
 
-typedef struct technician_data_t{
+typedef struct technician_data_t {
   int32_t touched;
   int32_t id;
   int32_t version;
@@ -241,17 +252,18 @@ typedef struct technician_data_t{
   time_t created_at;
   char name[SHORT_NAME_BUF];
   char email[EMAIL_ADDRESS_BUF];
-  char phone_number[PHONE_BUF];                     // (Required) Phone number;
+  char phone_number[PHONE_BUF];  // (Required) Phone number;
   CLIENT_DATA_REQUESTS client_requests;
 } TECHNICIAN_DATA;
 
 typedef struct technician_data_requests_t {
-  size_t n;                                         // Actual array size
-  size_t array_max_len;                             // Alloc'd array size
-  TECHNICIAN_DATA *array;                           // Alloc'd pointer for array. Recyclable. Must be free
+  size_t n;              // Actual array size
+  size_t array_max_len;  // Alloc'd array size
+  TECHNICIAN_DATA
+  *array;  // Alloc'd pointer for array. Recyclable. Must be free
 } TECHNICIAN_DATA_REQUESTS;
 
-//END TECHNICIAN TABLE
+// END TECHNICIAN TABLE
 
 // BEGIN SERVICE MANIPULATION
 void service_requests_clear(SERVICE_REQUESTS *);
@@ -267,16 +279,27 @@ void client_data_clear(CLIENT_DATA *);
 int technician_data_requests_init(TECHNICIAN_DATA_REQUESTS **);
 void technician_data_requests_free(TECHNICIAN_DATA_REQUESTS **);
 
-int technician_acquire_technician_data_from_array(size_t *, TECHNICIAN_DATA **, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_technician_data_from_array(size_t *, TECHNICIAN_DATA **,
+                                                  TECHNICIAN_DATA_REQUESTS *);
 void technician_data_clear(TECHNICIAN_DATA *);
 void technician_data_requests_clear(TECHNICIAN_DATA_REQUESTS *);
 
-int technician_acquire_client_data_from_array(size_t *, CLIENT_DATA **, size_t, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_client_data_requests_from_array(CLIENT_DATA_REQUESTS **, size_t, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_repair_request_from_array(size_t *, REPAIR **, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
-int technician_acquire_service_request_from_array(size_t *, SERVICE **, size_t, size_t, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_client_data_from_array(size_t *, CLIENT_DATA **, size_t,
+                                              TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_client_data_requests_from_array(
+    CLIENT_DATA_REQUESTS **, size_t, TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_repair_requests_from_array(REPAIR_REQUESTS **, size_t,
+                                                  size_t,
+                                                  TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_repair_request_from_array(size_t *, REPAIR **, size_t,
+                                                 size_t,
+                                                 TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_service_requests_from_array(SERVICE_REQUESTS **, size_t,
+                                                   size_t, size_t,
+                                                   TECHNICIAN_DATA_REQUESTS *);
+int technician_acquire_service_request_from_array(size_t *, SERVICE **, size_t,
+                                                  size_t, size_t,
+                                                  TECHNICIAN_DATA_REQUESTS *);
 
 // END TECHNICIAN
 #endif

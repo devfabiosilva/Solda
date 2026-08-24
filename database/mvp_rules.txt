@@ -15,7 +15,7 @@ pg_dump -U fabio -d solda_mvp -F c -f banco_completo_olda.dump -h localhost
 
 sudo -u postgres psql -c "SHOW data_directory;"
 
-ALTER TABLE technician_data 
+ALTER TABLE technician_data
 ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
 
 ALTER TABLE client_data ADD COLUMN version INTEGER NOT NULL DEFAULT 0;
@@ -45,7 +45,7 @@ create table technician_data (
 
 -- mock parent technician_data from Gemini
 INSERT INTO technician_data (name, email, rules)
-SELECT 
+SELECT
     'Technician MOCK ' || s.id,
     'technician' || s.id || '@empresa.com.br',
     (random() * 255)::int -- Generates 0 e 255
@@ -82,7 +82,7 @@ SELECT
 FROM generate_series(1, 100) AS s(id);
 
 -- first join test:
-SELECT 
+SELECT
     c.id,
     c.name AS client,
     c.cpf,
@@ -92,7 +92,7 @@ JOIN technician_data t ON c.technician_id = t.id
 LIMIT 10;
 
 -- How many technicians has more clients?
-SELECT 
+SELECT
     t.name AS technician,
     COUNT(c.id) AS total_clients
 FROM technician_data t
@@ -124,7 +124,7 @@ FROM technician_data t
 RIGHT JOIN client_data c ON c.technician_id = t.id
 WHERE t.id IS NULL;  -- no technician (inconsistences)
 
-ALTER TABLE repair_request 
+ALTER TABLE repair_request
 ALTER COLUMN client_data_id SET NOT NULL;
 
 -- create table based on struct repair_request_t
@@ -168,19 +168,19 @@ INSERT INTO repair_request (
 SELECT
     -- client_data_id
     (random() * 99 + 1)::int AS client_data_id,
-    
+
     -- Creating a random days
     NOW() - (random() * INTERVAL '30 days') AS created_at,
-    
+
     -- random Status 0, 1, 2, 3, 4, 5
     (random() * 5)::int AS status,
-    
+
     -- 50% true | false
     (random() > 0.5) AS is_budget,
-    
+
     -- Problem code 1 e 5
     (random() * 14)::int AS device_problem,
-    
+
     -- Dynamically serial ID
     CASE (s.id % 4)
         WHEN 0 THEN 'Apple iPhone 14'
@@ -188,10 +188,10 @@ SELECT
         WHEN 2 THEN 'Dell Inspiron 15'
         ELSE 'Sony PlayStation 5'
     END AS brand_model,
-    
+
     -- Brand model ID
     'SN-' || to_char(s.id * 123, 'FM00000000') AS serial_number,
-    
+
     -- Model claimed defect
     CASE (s.id % 4)
         WHEN 0 THEN 'Tela trincada e touch não responde'
@@ -199,25 +199,25 @@ SELECT
         WHEN 2 THEN 'Não liga, apresenta 3 bipes ao conectar na tomada'
         ELSE 'Superaquecendo e desligando após 10 minutos de jogo'
     END AS claimed_defect,
-    
+
     -- Fake observations
     'Aparelho com marcas de uso normais. ID do mock: ' || s.id AS observations,
-    
+
     -- Monetary types (0 - Dolar 1- Real 2- Bitcoin)
     (random() * 2)::int AS monetary_type,
-    
+
     -- Budget date: 2 days after registering
     NOW() + INTERVAL '2 days' AS expected_budget_date,
-    
+
     -- Deliver date: 5 days after created
     NOW() + INTERVAL '5 days' AS expected_delivery_date,
-    
+
     -- Budget 15000 (R$150) e 85000 (R$850) -> Respects a CONSTRAINT > 0
     (random() * 70000 + 15000)::bigint AS labor_bugdet,
-    
+
     -- Deiliver date (null for opening order)
     CASE WHEN random() > 0.5 THEN NOW() + (random() * INTERVAL '5 days') ELSE NULL END AS delivery_date,
-    
+
     -- Warranty (3 months after delivering)
     CASE WHEN random() > 0.5 THEN NOW() + INTERVAL '90 days' ELSE NULL END AS warranty
 
@@ -230,12 +230,12 @@ GROUP BY c.id, r.device_problem, r.brand_model, r.serial_number
 ORDER BY c.name ASC
 LIMIT 10;
 
-ALTER TABLE service_request 
+ALTER TABLE service_request
 ADD COLUMN monetary_type SMALLINT NOT NULL DEFAULT 0;
 
 ALTER TABLE app_config ADD CONSTRAINT single_row CHECK (id = 1);
 
-ALTER TABLE service_request 
+ALTER TABLE service_request
 ALTER COLUMN repair_request_id SET NOT NULL;
 
 -- create table based on typedef struct service_request_t
@@ -261,19 +261,19 @@ INSERT INTO service_request (
 SELECT
     -- valid id 1 e 100 (IDs que geramos antes)
     (random() * 99 + 1)::int AS repair_request_id,
-    
+
     -- created in random 15 days
     NOW() - (random() * INTERVAL '15 days') AS created_at,
-    
+
     -- quantity 1 e 3 (value > 0)
     (random() * 2 + 1)::int AS quantity,
-    
+
     -- Tipo monetário (0 - dolar 1- real 2- bitcoin)
     (random() * 2)::int AS monetary_type,
-    
+
     -- price per unity 3000 (R$30) e 45000 (R$450) in cents (value > 0)
     (random() * 42000 + 3000)::bigint AS unity_price,
-    
+
     -- Description
     CASE (s.id % 5)
         WHEN 0 THEN 'Substituição de conector de carga Tipo-C'
@@ -285,11 +285,11 @@ SELECT
 
 FROM generate_series(1, 200) AS s(id);
 
-SELECT 
-    c.name AS cliente, 
-    r.brand_model AS aparelho, 
-    s.description AS servico, 
-    s.quantity AS qtd, 
+SELECT
+    c.name AS cliente,
+    r.brand_model AS aparelho,
+    s.description AS servico,
+    s.quantity AS qtd,
     s.unity_price AS preco_unit
 FROM client_data c
 JOIN repair_request r ON r.client_data_id = c.id
@@ -395,7 +395,7 @@ SELECT row_to_json(t) FROM (
 ) t;
 
 COPY (
-    SELECT 
+    SELECT
         t.name AS tecnico,
         c.name AS cliente,
         c.cpf,
@@ -418,4 +418,3 @@ FROM repair_request r
 JOIN client_data c    ON c.id = r.client_data_id
 JOIN technician_data t ON t.id = c.technician_id
 WHERE r.id = $1;
-

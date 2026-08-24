@@ -4,6 +4,9 @@
 # Build folder
 build/
 
+# Graphify
+graphify-out/
+
 # Object files
 *.o
 *.ko
@@ -59,4 +62,3 @@ dkms.conf
 
 # executable test file
 *.t
-

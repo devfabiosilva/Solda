@@ -61,6 +61,7 @@
     <property name="title">
      <string>About</string>
     </property>
+    <addaction name="action_About_Solda"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuAbout"/>
@@ -72,6 +73,11 @@
    </property>
    <property name="text">
     <string>Open Database</string>
+   </property>
+  </action>
+  <action name="action_About_Solda">
+   <property name="text">
+    <string>&amp;About Solda</string>
    </property>
   </action>
  </widget>

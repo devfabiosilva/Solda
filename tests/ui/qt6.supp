@@ -28,4 +28,3 @@
    match-leak-kinds: reachable,possible
    obj:*libX11*
 }
-

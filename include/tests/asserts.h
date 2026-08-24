@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -7,7 +7,8 @@ extern "C" {
 
 /**
  * @file
- * @brief A simplest lightweight compatible C test suite for low level C and C++ applications
+ * @brief A simplest lightweight compatible C test suite for low level C and C++
+ * applications
  * @mainpage Overview
  *
  * ## Usage
@@ -18,7 +19,8 @@ extern "C" {
  * make
  * ```
  *
- * to test [autoexplaining example](https://github.com/devfabiosilva/ctest/tree/master/example)
+ * to test [autoexplaining
+ * example](https://github.com/devfabiosilva/ctest/tree/master/example)
  *
  * To clean test:
  * ```sh
@@ -35,7 +37,9 @@ extern "C" {
  * @author Fábio Pereira da Silva
  * @date Jun 10 2021
  * @version 0.0.1
- * @copyright License MIT <a href="https://github.com/devfabiosilva/ctest/blob/master/README.md">see here</a>
+ * @copyright License MIT <a
+ * href="https://github.com/devfabiosilva/ctest/blob/master/README.md">see
+ * here</a>
  *
  * ## Contact
  *
@@ -46,13 +50,13 @@ extern "C" {
  * @def C_TEST_TRUE
  * _TRUE_ value for CTEST
  */
-#define C_TEST_TRUE (int)(1==1)
+#define C_TEST_TRUE (int)(1 == 1)
 
 /**
  * @def C_TEST_FALSE
  * _FALSE_ value for CTEST
  */
-#define C_TEST_FALSE (int)(1!=1)
+#define C_TEST_FALSE (int)(1 != 1)
 
 #ifndef CTEST_DOC_SKIP
 void _c_test_ignore();
@@ -276,22 +280,14 @@ void assert_equal_int(int, int, ...);
 void assert_not_equal_int(int, int, ...);
 void assert_equal_longint(long long int, long long int, ...);
 void assert_not_equal_longint(long long int, long long int, ...);
-void assert_equal_unsigned_longint(unsigned long long int, unsigned long long int, ...);
-void assert_not_equal_unsigned_longint(unsigned long long int, unsigned long long int, ...);
+void assert_equal_unsigned_longint(unsigned long long int,
+                                   unsigned long long int, ...);
+void assert_not_equal_unsigned_longint(unsigned long long int,
+                                       unsigned long long int, ...);
 void assert_equal_double(double, double, double, ...);
 void assert_not_equal_double(double, double, double, ...);
-void assert_equal_byte(
-   void *,
-   void *,
-   size_t,
-   ...
-);
-void assert_not_equal_byte(
-   void *,
-   void *,
-   size_t,
-   ...
-);
+void assert_equal_byte(void *, void *, size_t, ...);
+void assert_not_equal_byte(void *, void *, size_t, ...);
 void assert_equal_string(const char *, const char *, ...);
 void assert_not_equal_string(const char *, const char *, ...);
 void assert_equal_string_ignore_case(const char *, const char *, ...);
@@ -344,15 +340,16 @@ void assert_fail(void *, ...);
  *
  *    C_ASSERT_NOT_EQUAL_BYTE(vec1, vec2, sizeof(vec1),
  *        CTEST_SETTER(
- *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p) of size %u", vec1, vec2, sizeof(vec1)),
- *          CTEST_WARN("Warning: This should be different")
+ *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p)
+ * of size %u", vec1, vec2, sizeof(vec1)), CTEST_WARN("Warning: This should be
+ * different")
  *       )
  *    )
  *
  *    end_tests();
  *
  *    return 0;
- * } 
+ * }
  * ```
  * @see rm_on_add_test
  */
@@ -389,19 +386,21 @@ void rm_on_add_test();
  *    uint8_t *vec2 = malloc(sizeof(vec1));
  *
  *    memcpy(vec2, vec1, sizeof(vec1));
- *    on_begin_test(on_begin_test_fn); // It will be called every begin test event
+ *    on_begin_test(on_begin_test_fn); // It will be called every begin test
+ * event
  *
  *    C_ASSERT_NOT_EQUAL_BYTE(vec1, vec2, sizeof(vec1),
  *        CTEST_SETTER(
- *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p) of size %u", vec1, vec2, sizeof(vec1)),
- *          CTEST_WARN("Warning: This should be different")
+ *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p)
+ * of size %u", vec1, vec2, sizeof(vec1)), CTEST_WARN("Warning: This should be
+ * different")
  *       )
  *    )
  *
  *    end_tests();
  *
  *    return 0;
- * } 
+ * }
  * ```
  * @see rm_begin_test
  */
@@ -442,15 +441,16 @@ void rm_begin_test();
  *
  *    C_ASSERT_NOT_EQUAL_BYTE(vec1, vec2, sizeof(vec1),
  *        CTEST_SETTER(
- *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p) of size %u", vec1, vec2, sizeof(vec1)),
- *          CTEST_WARN("Warning: This should be different")
+ *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p)
+ * of size %u", vec1, vec2, sizeof(vec1)), CTEST_WARN("Warning: This should be
+ * different")
  *       )
  *    )
  *
  *    end_tests();
  *
  *    return 0;
- * } 
+ * }
  * ```
  * @see rm_on_test
  */
@@ -487,19 +487,21 @@ void rm_on_test();
  *    uint8_t *vec2 = malloc(sizeof(vec1));
  *
  *    memcpy(vec2, vec1, sizeof(vec1));
- *    on_end_test(on_end_test_fn); // It will be called if all tests finishes successfully
+ *    on_end_test(on_end_test_fn); // It will be called if all tests finishes
+ * successfully
  *
  *    C_ASSERT_NOT_EQUAL_BYTE(vec1, vec2, sizeof(vec1),
  *        CTEST_SETTER(
- *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p) of size %u", vec1, vec2, sizeof(vec1)),
- *          CTEST_WARN("Warning: This should be different")
+ *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p)
+ * of size %u", vec1, vec2, sizeof(vec1)), CTEST_WARN("Warning: This should be
+ * different")
  *       )
  *    )
  *
  *    end_tests(); // Function on_end_test_fn will be called here
  *
  *    return 0;
- * } 
+ * }
  * ```
  * @see rm_on_end_test
  */
@@ -539,12 +541,14 @@ void rm_on_end_test();
  *    vec2 = malloc(sizeof(vec1));
  *
  *    memcpy(vec2, vec1, sizeof(vec1));
- *    on_abort(on_abort_fn); // If error occurs, on abort will call on_abort_fn() function for any assert function
+ *    on_abort(on_abort_fn); // If error occurs, on abort will call
+ * on_abort_fn() function for any assert function
  *
  *    C_ASSERT_NOT_EQUAL_BYTE(vec1, vec2, sizeof(vec1),
  *        CTEST_SETTER(
- *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p) of size %u", vec1, vec2, sizeof(vec1)),
- *          CTEST_WARN("Warning: This should be different")
+ *          CTEST_INFO("Testing if \"vec1\" (%p) is different from \"vec2\" (%p)
+ * of size %u", vec1, vec2, sizeof(vec1)), CTEST_WARN("Warning: This should be
+ * different")
  *       )
  *    )
  *
@@ -552,7 +556,7 @@ void rm_on_end_test();
  *    end_tests();
  *
  *    return 0;
- * } 
+ * }
  * ```
  * @see rm_on_abort
  */
@@ -568,7 +572,8 @@ void rm_on_abort();
 
 /**
  * @fn void end_tests()
- * @brief This function is called in every tests. It shows statistics of the tests
+ * @brief This function is called in every tests. It shows statistics of the
+ * tests
  */
 void end_tests();
 
@@ -577,21 +582,25 @@ void *vargs_setter(int, ...);
 void *set_varg(uint32_t, const char *, ...);
 
 #define C_TEST_TYPE_VARGS_MSG (uint32_t)(0x10000000)
-#define C_TEST_TYPE_VARGS_CALLBACK (uint32_t)(0x20000000|C_TEST_TYPE_VARGS_MSG)
+#define C_TEST_TYPE_VARGS_CALLBACK \
+  (uint32_t)(0x20000000 | C_TEST_TYPE_VARGS_MSG)
 
-#define C_TEST_VARGS_TITLE (uint32_t)(C_TEST_TYPE_VARGS_MSG|0x002E4992)
-#define C_TEST_VARGS_INFO (uint32_t)(C_TEST_TYPE_VARGS_MSG|0x012E4992)
-#define C_TEST_VARGS_WARNING (uint32_t)(C_TEST_TYPE_VARGS_MSG|0x022E4992)
-#define C_TEST_VARGS_ERROR (uint32_t)(C_TEST_TYPE_VARGS_MSG|0x032E4992)
-#define C_TEST_VARGS_SUCCESS (uint32_t)(C_TEST_TYPE_VARGS_MSG|0x042E4992)
+#define C_TEST_VARGS_TITLE (uint32_t)(C_TEST_TYPE_VARGS_MSG | 0x002E4992)
+#define C_TEST_VARGS_INFO (uint32_t)(C_TEST_TYPE_VARGS_MSG | 0x012E4992)
+#define C_TEST_VARGS_WARNING (uint32_t)(C_TEST_TYPE_VARGS_MSG | 0x022E4992)
+#define C_TEST_VARGS_ERROR (uint32_t)(C_TEST_TYPE_VARGS_MSG | 0x032E4992)
+#define C_TEST_VARGS_SUCCESS (uint32_t)(C_TEST_TYPE_VARGS_MSG | 0x042E4992)
 
-#define C_TEST_VARGS_ON_SUCCESS_CALLBACK (uint32_t)(C_TEST_TYPE_VARGS_CALLBACK|0x052E4992)
-#define C_TEST_VARGS_ON_ERROR_CALLBACK (uint32_t)(C_TEST_TYPE_VARGS_CALLBACK|0x062E4992)
+#define C_TEST_VARGS_ON_SUCCESS_CALLBACK \
+  (uint32_t)(C_TEST_TYPE_VARGS_CALLBACK | 0x052E4992)
+#define C_TEST_VARGS_ON_ERROR_CALLBACK \
+  (uint32_t)(C_TEST_TYPE_VARGS_CALLBACK | 0x062E4992)
 #endif
 
 /**
  * @def CTEST_SETTER(...)
- * @brief Setter for CTEST. This setter allows callback function such _on_error_ and _on_success_ and add custom _message_, _warn_, _error_, _info_ and _title_
+ * @brief Setter for CTEST. This setter allows callback function such _on_error_
+ *and _on_success_ and add custom _message_, _warn_, _error_, _info_ and _title_
  *
  * # Example:
  *
@@ -605,11 +614,12 @@ void *set_varg(uint32_t, const char *, ...);
  *        CTEST_WARN("This is a WARN message"),
  *        CTEST_ON_ERROR("This is a message when error occurs"),
  *        CTEST_ON_SUCCESS("This is a message when SUCCESS occurs"),
- *        CTEST_ON_ERROR_CB(cb_func_on_error, "This function is called on error"),
- *        CTEST_ON_SUCCESS_CB(cb_func_on_success, "This function is callend on success")
+ *        CTEST_ON_ERROR_CB(cb_func_on_error, "This function is called on
+ *error"), CTEST_ON_SUCCESS_CB(cb_func_on_success, "This function is callend on
+ *success")
  *  ))
  *  ...
- *``` 
+ *```
  */
 #define CTEST_SETTER(...) vargs_setter(-1, __VA_ARGS__, NULL, VA_END_SIGNATURE)
 
@@ -620,15 +630,16 @@ void *set_varg(uint32_t, const char *, ...);
  * # Example:
  *
  *```c
- * 
+ *
  *  ...
  *  C_ASSERT_EQUAL_BYTE(vec1, vec3, sizeof(vec1),
  *     CTEST_SETTER(
- *       CTEST_TITLE("Checking if vec1 at (%p) has equal bytes with vec2 at (%p)", vec1, vec2,
+ *       CTEST_TITLE("Checking if vec1 at (%p) has equal bytes with vec2 at
+ *(%p)", vec1, vec2,
  *     )
  *  )
  *  ...
- *``` 
+ *```
  */
 #define CTEST_TITLE(...) set_varg(C_TEST_VARGS_TITLE, __VA_ARGS__)
 
@@ -643,11 +654,12 @@ void *set_varg(uint32_t, const char *, ...);
  *  ...
  *  C_ASSERT_EQUAL_BYTE(vec1, vec3, sizeof(vec1),
  *     CTEST_SETTER(
- *       CTEST_INFO("Checking if vec1 at (%p) has equal bytes with vec2 at (%p)", vec1, vec2,
+ *       CTEST_INFO("Checking if vec1 at (%p) has equal bytes with vec2 at
+ *(%p)", vec1, vec2,
  *     )
  *  )
  *  ...
- *``` 
+ *```
  */
 #define CTEST_INFO(...) set_varg(C_TEST_VARGS_INFO, __VA_ARGS__)
 
@@ -662,17 +674,22 @@ void *set_varg(uint32_t, const char *, ...);
  *  ...
  *  C_ASSERT_EQUAL_BYTE(vec1, vec3, sizeof(vec1),
  *     CTEST_SETTER(
- *       CTEST_WARN("Checking if vec1 at (%p) has equal bytes with vec2 at (%p)", vec1, vec2,
+ *       CTEST_WARN("Checking if vec1 at (%p) has equal bytes with vec2 at
+ *(%p)", vec1, vec2,
  *     )
  *  )
  *  ...
- *``` 
+ *```
  */
 #define CTEST_WARN(...) set_varg(C_TEST_VARGS_WARNING, __VA_ARGS__)
 #define CTEST_ON_ERROR(...) set_varg(C_TEST_VARGS_ERROR, __VA_ARGS__)
 #define CTEST_ON_SUCCESS(...) set_varg(C_TEST_VARGS_SUCCESS, __VA_ARGS__)
-#define CTEST_ON_SUCCESS_CB(...) set_varg_callback(C_TEST_VARGS_ON_SUCCESS_CALLBACK, __VA_ARGS__, NULL, VAS_END_SIGNATURE)
-#define CTEST_ON_ERROR_CB(...) set_varg_callback(C_TEST_VARGS_ON_ERROR_CALLBACK, __VA_ARGS__, NULL, VAS_END_SIGNATURE)
+#define CTEST_ON_SUCCESS_CB(...)                                         \
+  set_varg_callback(C_TEST_VARGS_ON_SUCCESS_CALLBACK, __VA_ARGS__, NULL, \
+                    VAS_END_SIGNATURE)
+#define CTEST_ON_ERROR_CB(...)                                         \
+  set_varg_callback(C_TEST_VARGS_ON_ERROR_CALLBACK, __VA_ARGS__, NULL, \
+                    VAS_END_SIGNATURE)
 
 /**
  * @def C_ASSERT_FALSE(result, ...)
@@ -703,7 +720,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_INT
  */
-#define C_ASSERT_EQUAL_INT(expected, ...) assert_equal_int(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_INT(expected, ...) \
+  assert_equal_int(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_INT(unexpected, result, ...)
@@ -714,7 +732,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_INT
  */
-#define C_ASSERT_NOT_EQUAL_INT(unexpected, ...) assert_not_equal_int(unexpected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_INT(unexpected, ...) \
+  assert_not_equal_int(unexpected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_LONG_INT(expected, result, ...)
@@ -725,7 +744,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_LONG_INT
  */
-#define C_ASSERT_EQUAL_LONG_INT(expected, ...) assert_equal_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_LONG_INT(expected, ...) \
+  assert_equal_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_LONG_INT(unexpected, result, ...)
@@ -736,7 +756,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_LONG_INT
  */
-#define C_ASSERT_NOT_EQUAL_LONG_INT(expected, ...) assert_not_equal_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_LONG_INT(expected, ...) \
+  assert_not_equal_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_UNSIGNED_LONG_INT(expected, result, ...)
@@ -747,7 +768,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_UNSIGNED_LONG_INT
  */
-#define C_ASSERT_EQUAL_UNSIGNED_LONG_INT(expected, ...) assert_equal_unsigned_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_UNSIGNED_LONG_INT(expected, ...) \
+  assert_equal_unsigned_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_UNSIGNED_LONG_INT(unexpected, result, ...)
@@ -758,7 +780,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_UNSIGNED_LONG_INT
  */
-#define C_ASSERT_NOT_EQUAL_UNSIGNED_LONG_INT(expected, ...) assert_not_equal_unsigned_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_UNSIGNED_LONG_INT(expected, ...) \
+  assert_not_equal_unsigned_longint(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_DOUBLE(expected, result, delta, ...)
@@ -770,7 +793,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_DOUBLE
  */
-#define C_ASSERT_EQUAL_DOUBLE(expected, result, ...) assert_equal_double(expected, result, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_DOUBLE(expected, result, ...) \
+  assert_equal_double(expected, result, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_DOUBLE(unexpected, result, delta, ...)
@@ -782,7 +806,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_DOUBLE
  */
-#define C_ASSERT_NOT_EQUAL_DOUBLE(expected, result, ...) assert_not_equal_double(expected, result, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_DOUBLE(expected, result, ...) \
+  assert_not_equal_double(expected, result, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_BYTE(expected, result, size, ...)
@@ -794,7 +819,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_BYTE
  */
-#define C_ASSERT_EQUAL_BYTE(expected, result, ...) assert_equal_byte(expected, result, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_BYTE(expected, result, ...) \
+  assert_equal_byte(expected, result, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_BYTE(unexpected, result, size, ...)
@@ -806,7 +832,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_BYTE
  */
-#define C_ASSERT_NOT_EQUAL_BYTE(unexpected, result, ...) assert_not_equal_byte(unexpected, result, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_BYTE(unexpected, result, ...) \
+  assert_not_equal_byte(unexpected, result, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NULL(result, ...)
@@ -837,7 +864,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_STRING
  */
-#define C_ASSERT_EQUAL_STRING(expected, ...) assert_equal_string(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_STRING(expected, ...) \
+  assert_equal_string(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_STRING(unexpected, result, ...)
@@ -848,7 +876,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_STRING
  */
-#define C_ASSERT_NOT_EQUAL_STRING(expected, ...) assert_not_equal_string(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_STRING(expected, ...) \
+  assert_not_equal_string(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_STRING_IGNORE_CASE(expected, result, ...)
@@ -859,7 +888,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_STRING_IGNORE_CASE
  */
-#define C_ASSERT_EQUAL_STRING_IGNORE_CASE(expected, ...) assert_equal_string_ignore_case(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_STRING_IGNORE_CASE(expected, ...) \
+  assert_equal_string_ignore_case(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_STRING_IGNORE_CASE(unexpected, result, ...)
@@ -870,7 +900,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_STRING_IGNORE_CASE
  */
-#define C_ASSERT_NOT_EQUAL_STRING_IGNORE_CASE(expected, ...) assert_not_equal_string_ignore_case(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_STRING_IGNORE_CASE(expected, ...) \
+  assert_not_equal_string_ignore_case(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_U8(expected, result, ...)
@@ -881,7 +912,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_U8
  */
-#define C_ASSERT_EQUAL_U8(expected, ...) assert_equal_u8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_U8(expected, ...) \
+  assert_equal_u8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_U8(unexpected, result, ...)
@@ -892,7 +924,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_U8
  */
-#define C_ASSERT_NOT_EQUAL_U8(expected, ...) assert_not_equal_u8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_U8(expected, ...) \
+  assert_not_equal_u8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_S8(expected, result, ...)
@@ -903,7 +936,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_S8
  */
-#define C_ASSERT_EQUAL_S8(expected, ...) assert_equal_s8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_S8(expected, ...) \
+  assert_equal_s8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_S8(unexpected, result, ...)
@@ -914,7 +948,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_S8
  */
-#define C_ASSERT_NOT_EQUAL_S8(expected, ...) assert_not_equal_s8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_S8(expected, ...) \
+  assert_not_equal_s8(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_U16(expected, result, ...)
@@ -925,7 +960,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_U16
  */
-#define C_ASSERT_EQUAL_U16(expected, ...) assert_equal_u16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_U16(expected, ...) \
+  assert_equal_u16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_U16(unexpected, result, ...)
@@ -936,7 +972,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_U16
  */
-#define C_ASSERT_NOT_EQUAL_U16(expected, ...) assert_not_equal_u16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_U16(expected, ...) \
+  assert_not_equal_u16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_S16(expected, result, ...)
@@ -947,7 +984,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_S16
  */
-#define C_ASSERT_EQUAL_S16(expected, ...) assert_equal_s16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_S16(expected, ...) \
+  assert_equal_s16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_S16(unexpected, result, ...)
@@ -958,7 +996,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_S16
  */
-#define C_ASSERT_NOT_EQUAL_S16(expected, ...) assert_not_equal_s16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_S16(expected, ...) \
+  assert_not_equal_s16(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_U32(expected, result, ...)
@@ -969,7 +1008,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_U32
  */
-#define C_ASSERT_EQUAL_U32(expected, ...) assert_equal_u32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_U32(expected, ...) \
+  assert_equal_u32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_U32(unexpected, result, ...)
@@ -980,7 +1020,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_U32
  */
-#define C_ASSERT_NOT_EQUAL_U32(expected, ...) assert_not_equal_u32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_U32(expected, ...) \
+  assert_not_equal_u32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_S32(expected, result, ...)
@@ -991,7 +1032,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_S32
  */
-#define C_ASSERT_EQUAL_S32(expected, ...) assert_equal_s32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_S32(expected, ...) \
+  assert_equal_s32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_S32(unexpected, result, ...)
@@ -1002,7 +1044,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_S32
  */
-#define C_ASSERT_NOT_EQUAL_S32(expected, ...) assert_not_equal_s32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_S32(expected, ...) \
+  assert_not_equal_s32(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_U64(expected, result, ...)
@@ -1013,7 +1056,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_U64
  */
-#define C_ASSERT_EQUAL_U64(expected, ...) assert_equal_u64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_U64(expected, ...) \
+  assert_equal_u64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_U64(unexpected, result, ...)
@@ -1024,7 +1068,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_U64
  */
-#define C_ASSERT_NOT_EQUAL_U64(expected, ...) assert_not_equal_u64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_U64(expected, ...) \
+  assert_not_equal_u64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_EQUAL_S64(expected, result, ...)
@@ -1035,7 +1080,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_NOT_EQUAL_S64
  */
-#define C_ASSERT_EQUAL_S64(expected, ...) assert_equal_s64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_EQUAL_S64(expected, ...) \
+  assert_equal_s64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_NOT_EQUAL_S64(unexpected, result, ...)
@@ -1046,7 +1092,8 @@ void *set_varg(uint32_t, const char *, ...);
  *
  * @see C_ASSERT_EQUAL_S64
  */
-#define C_ASSERT_NOT_EQUAL_S64(expected, ...) assert_not_equal_s64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
+#define C_ASSERT_NOT_EQUAL_S64(expected, ...) \
+  assert_not_equal_s64(expected, __VA_ARGS__, VAS_END_SIGNATURE);
 
 /**
  * @def C_ASSERT_FAIL(...)
@@ -1073,7 +1120,7 @@ void *set_varg(uint32_t, const char *, ...);
  *    end_tests();
  *
  *    return 0;
- * } 
+ * }
  * ```
  */
 #define C_ASSERT_FAIL(...) assert_fail(__VA_ARGS__, VAS_END_SIGNATURE);
@@ -1082,20 +1129,18 @@ void *set_varg(uint32_t, const char *, ...);
 #ifdef DEBUG_TEST
 // TEMPORARY FOR TESTS
 
- int load_test_vargs_for_test(void **, ...);
- int load_test_vargs_for_test_v2(void **, ...);
- int free_vargs_for_test(void *);
- char *ctest_setter_has_title(void *);
- char *ctest_setter_has_info(void *);
- char *ctest_setter_has_warn(void *);
- char *ctest_setter_has_onerror(void *);
- char *ctest_setter_has_onsuccess(void *);
- void show_message_text();
+int load_test_vargs_for_test(void **, ...);
+int load_test_vargs_for_test_v2(void **, ...);
+int free_vargs_for_test(void *);
+char *ctest_setter_has_title(void *);
+char *ctest_setter_has_info(void *);
+char *ctest_setter_has_warn(void *);
+char *ctest_setter_has_onerror(void *);
+char *ctest_setter_has_onsuccess(void *);
+void show_message_text();
 #endif
 #endif
 
 #ifdef __cplusplus
 }
 #endif
-
-
